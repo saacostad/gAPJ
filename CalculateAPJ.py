@@ -9,8 +9,11 @@ from modules.ActionPhaseJump import calculate_APJ
 from modules.orbit_tools import avermax   
 
 
-print(""" \n\n \t\tACTION AND PHASE JUMP
-\t\t  Santiago's version \n """ )
+print(""" 
+\n\n 
+\t\tACTION AND PHASE JUMP
+\t\t   Version alpha
+\n """ )
 
 
 

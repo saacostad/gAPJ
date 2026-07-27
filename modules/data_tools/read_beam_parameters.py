@@ -9,7 +9,7 @@ import tfs
 
 
 
-def read_parameters(path, 
+def read_beam_parameters(path, 
                     initial_dict = {"PARTICLE": "ELECTRON", "RADIATE": "FALSE", "BV": "+1"}, 
                     params = ["NPART", "KBUNCH", "ENERGY", "EX", "EY"],
                     file_params = ["bunch population", "number of bunches", "beam energy", "horizontal emittance", "vertical emittance"],

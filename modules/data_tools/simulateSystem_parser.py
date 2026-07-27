@@ -17,7 +17,7 @@ def create_parser_args(parser):
     )
 
 
-def parse(parsed_args):
+def parse(parsed_args, system = "Invalid"):
     """ This function takes the parsed args and checks that the entries are allright """
 
     # -- We first parse the system

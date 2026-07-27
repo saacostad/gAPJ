@@ -1,0 +1,33 @@
+# Inputs paths for the nominal files
+[LatticeFiles]
+
+# Main path where the sequence and beam params are
+main_input_path = "inputs/lattices/higgs/"
+sequence_path = "fccee_h.madx"          # Name of the file with the seq
+params_path = "h_parameter_table.txt"   # Name of the file with the beam's params
+
+# Name of the sequence
+sequence_name = "fccee_p_ring"
+
+# Measuring elements keywords
+measure_class = ["marker"]
+optics_class = ["quadrupole"]
+
+# What parameters use for the twiss
+measure_parameters = ["name", "s", "betx", "bety", "mux", "muy"]
+optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "K1L"]
+
+
+[NominalSystem]
+
+# Which twiss files to create for the nominal lattice
+measure_twiss = true            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = true             # Twiss of the optics (quadrupoles)
+
+
+main_output_path = "outputs/"
+measure_path = "nominal_measurements_twiss.tfs"
+optics_path = "nominal_quads_twiss.tfs"
+
+
+

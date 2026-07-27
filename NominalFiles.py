@@ -12,6 +12,10 @@ import matplotlib.pyplot as plt
 from cpymad.madx import Madx
 from modules.data_tools.read_beam_parameters import read_parameters  # To parse the parameters .txt
 
+# Libraries to parse
+import tomllib
+
+
 # ---------------------------
 # INPUT FILES
 # ---------------------------
