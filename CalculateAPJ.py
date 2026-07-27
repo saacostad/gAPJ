@@ -42,18 +42,18 @@ def save_APJ_var(plane, s, NAMES, var, name):
 # TODO: tho i'd prefer to create a config file, would be funnier
 
 # BPM: BPMSW.1L1.B1
-reference_bpm = "QC3L.1"      # The s_e from where we'll select the avermax orbits
+reference_bpm = "BPM_QD0AL.0"      # The s_e from where we'll select the avermax orbits
 # reference_bpm = "BPMSW.1L1.B1"      # The s_e from where we'll select the avermax orbits
 
 folder = "sin_errores"
 
-trackone_path = f"data/{folder}/trackone"          # The original trackone path
-twiss_path = f"data/{folder}/twiss.optics"       # The twiss files to use    
+trackone_path = f"outputs/errors/E_trackoneone"          # The original trackone path
+twiss_path = f"outputs/nominal_measurements_twiss.tfs"       # The twiss files to use    
 
 
 
 
-save_path = f"data/output"
+save_path = f"outputs/errors/APJ"
 
 
 # The arcs of IP2 so we calculate the avermax traj
