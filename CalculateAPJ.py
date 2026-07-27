@@ -46,7 +46,8 @@ folder = "sin_errores"
 
 trackone_path = f"data/{folder}/trackone"          # The original trackone path
 twiss_path = f"data/{folder}/twiss.optics"       # The twiss files to use    
-avermax_path = f"data/{folder}/avermax.sdds.new"        # Avermax only to make some tests 
+
+
 
 
 save_path = f"data/output"

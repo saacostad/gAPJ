@@ -27,7 +27,7 @@ parameters_path = input_main_path + "h_parameter_table.txt"    # Parameters such
 
 # -- Paths to output files
 twiss_path = "outputs/nominal_measurements_twiss.tfs"                                    # Output file for the nominal twiss
-quadrupoles_parameters_path = "outputs/quads_twiss.tfs"           # Output file for the quads strengths and lengths
+quadrupoles_parameters_path = "outputs/nominal_quads_twiss.tfs"           # Output file for the quads strengths and lengths
 
 # -- Definitions
 sequence_name = "fccee_p_ring"                                              # The name of the sequence
