@@ -36,6 +36,4 @@ def parse(parsed_args, system = "Invalid"):
         elif parse_system in ["corrections", "corr"]:
             system = "C"
 
-        print("System selected...")
-    
     return system

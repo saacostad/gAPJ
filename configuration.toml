@@ -17,6 +17,46 @@ optics_class = ["quadrupole"]
 measure_parameters = ["name", "s", "betx", "bety", "mux", "muy"]
 optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "K1L"]
 
+# Debug flag 
+debug = false       # If true, MADX will log to console 
+
+
+[BeamParameters]
+# Parameters for the beam to simulate. They will overwrite those in the parameters file
+# TODO: make this work and make it check we have a parameters file
+
+# particle = "positron"
+
+
+[TrackParameters]
+
+# Random initial positions (to change the phase)
+random_positions = true
+random_velocities = false
+
+# Random sigmas to create the initial injection conditions
+x_sigma = 0.000010
+y_sigma = 0.000001
+px_sigma = 0.000010
+py_sigma = 0.000010
+
+# Manual insertions 
+x = 0.00001345 
+y = 0.0000006 
+px = 0.0
+py = 0.0
+
+# Other parameters
+N = 100             # Number of turns  
+
+# -- PTC parameters (the better, the slower)
+model = 3           # What model to usefor PTC (1. Default drift-kick-drift, 2. Matrix-Kick Matrix, 3. SixTrack)
+method = 2          # Order of the integrations
+nst = 2             # Integration steps
+
+#   -----------------------------
+#    SYSTEM'S INPUTS AND OUTPUTS
+#   -----------------------------
 
 [NominalSystem]
 
@@ -29,5 +69,18 @@ main_output_path = "outputs/"
 measure_path = "nominal_measurements_twiss.tfs"
 optics_path = "nominal_quads_twiss.tfs"
 
+[ErrorsSystem]
 
+# Which twiss files to create for the nominal lattice
+measure_twiss = true            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = true             # Twiss of the optics (quadrupoles)
+TBT_track = true                # Wether or not to track
 
+# Input options
+modifications_path = "inputs/IR_errors.madx"
+
+# Output options
+main_output_path = "outputs/errors/"
+measure_path = "E_measurements_twiss.tfs"
+optics_path = "E_quads_twiss.tfs"
+track_path = "E_trackone"
