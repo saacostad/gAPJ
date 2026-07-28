@@ -15,6 +15,9 @@ from cpymad.madx import Madx
 from modules.data_tools.read_beam_parameters import read_beam_parameters  # To parse the parameters .txt
 from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
 
+# I will import this one to get rid of a troublesome file 
+import os
+
 
 
 # ---------------------------
@@ -133,8 +136,8 @@ def simulate_system(parameters_path, sequence_path,
         # -- Tracking
 
         # Set debug level
-        madx.input(f'PTC_SETSWITCH, DEBUGLEVEL={2 if debug else 0};')
-        madx.input(f'PTC_CREATE_UNIVERSE, SYMPRINT={debug};')
+        madx.input(f'PTC_SETSWITCH, DEBUGLEVEL={2 if debug else 0}, MAPDUMP={1 if debug else 0};')
+        madx.input(f'PTC_CREATE_UNIVERSE, SYMPRINT={not debug};')
 
         madx.input(f'PTC_CREATE_LAYOUT, MODEL={tracking_config["model"]}, METHOD={tracking_config["method"]}, NST={tracking_config["nst"]};')
         madx.input(f'PTC_START, X={x}, PX={px}, Y={y}, PY={py};')
@@ -149,6 +152,9 @@ def simulate_system(parameters_path, sequence_path,
         madx.input(f'PTC_TRACK_END;')
 
         print("")
+
+        # Get rid of that ugly file 
+        os.system("rm internal_mag_pot.txt")
 
         # Call the twiss function
         madx.twiss(file=twiss_path)

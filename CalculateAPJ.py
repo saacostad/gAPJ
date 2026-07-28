@@ -1,19 +1,29 @@
-import tfs as tfs    # To read the twiss files
-from turn_by_turn.trackone import read_tbt  # Para leer el trackone
-import pandas as pd     # Para poder usar todo eso 
+"""
+This script calculates the APJ variables from the trackone file
+TODO: I'm planning to add a Xtrack output file parser too
+"""
 
-import numpy as np      # Porque siempre va
+import tfs as tfs    # To read the twiss files
+from turn_by_turn.trackone import read_tbt  # To read the trackone
+import pandas as pd     # To get rid of the tfs that are ugly
+
+# These two always go
+import numpy as np  
 import matplotlib.pyplot as plt
 
+# self-made modules
 from modules.ActionPhaseJump import calculate_APJ   
 from modules.orbit_tools import avermax   
+from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
 
+# Parceros
+import tomllib                  # This is to parse the config file
+import argparse
 
-print(""" 
-\n\n 
-\t\tACTION AND PHASE JUMP
-\t\t   Version alpha
-\n """ )
+print("""
+\t\tA C T I O N   A N D   P H A S E   JUMP
+\t\tVersion alpha
+""" )
 
 
 
@@ -25,48 +35,67 @@ def save_APJ_var(plane, s, NAMES, var, name):
 
     global save_path 
 
-    with open(f"{save_path}/{name}", 'w') as f:
+    with open(f"{save_path}{name}", 'w') as f:
         
         for row in range(s.shape[0]):
 
             f.write(f'{plane} "{NAMES[row]}" {s[row]} {var[row]}\n')
 
-    print(f"saved {save_path}/{name}")
+    print(f"----> saved {save_path}{name}")
 
 
 # --------------------------------
-#       ADJUSTABLES 
+#       PARSING CONFIG 
 # --------------------------------
+# -- Parse command line
 
-# TODO: if this script actually works, then I'll have to parse all of this 
-# TODO: tho i'd prefer to create a config file, would be funnier
+print("Parsing command line arguments...")
 
-# BPM: BPMSW.1L1.B1
-reference_bpm = "BPM_QD0AL.0"      # The s_e from where we'll select the avermax orbits
-# reference_bpm = "BPMSW.1L1.B1"      # The s_e from where we'll select the avermax orbits
+parser = argparse.ArgumentParser()
+create_parser_args(parser)
+parsed_args = parser.parse_args()
 
-folder = "sin_errores"
+system = parse(parsed_args)
 
-trackone_path = f"outputs/errors/E_trackoneone"          # The original trackone path
-twiss_path = f"outputs/nominal_measurements_twiss.tfs"       # The twiss files to use    
+# Where to find the data to work with
+dic_key = 'Nominal' if system == 'N' else 'Errors' if system == 'E' else 'Corrections' if system == 'C' else 'Invalid'
+print("Parsing config file arguments...")
 
+system_config = None        # Configuration dict for special case use
+nominal_config = None        # Configuration dict for special case use
 
+# Read the config file and save it 
+with open("configuration.toml", "rb") as f:
 
+    # We only need the nominal and system's data
+    general_config = tomllib.load(f)
+    
+    nominal_config = general_config["NominalSystem"]
+    system_config = general_config[f"{dic_key}System"]
 
-save_path = f"outputs/errors/APJ"
+print(f"Read from NominalSystem and {dic_key}System entry")
 
+reference_bpm = system_config["ref_bpm"]      # The s_e from where we'll select the avermax orbits
+
+# Paths
+trackone_path = system_config["main_output_path"] + system_config["track_path"] + "one"     # The original trackone path
+twiss_path = nominal_config["main_output_path"] + nominal_config["measure_path"]             # The twiss files to use    
+save_path = system_config["main_output_path"] + system_config["APJ_path"]                   # Where to save the APJ files
 
 # The arcs of IP2 so we calculate the avermax traj
-arc = (15000, 20000)
-rightArc = (23500, 30000)
+arc =system_config["left_arc"] 
+rightArc = system_config["right_arc"]
 
+plot = system_config["plot_APJ"]
+
+_treshold = system_config["avermax_TH"]      # Treshold to use for avermax calc
 
 # --------------------------------
 #       LECTURA DEL TRACKONE
 # --------------------------------
 
 # Messages to check the state of the script
-print(f"Reading turn-by-turn data from {trackone_path}")
+print(f"Reading turn-by-turn data from {trackone_path}...")
 
 # Se lee el TrackOne
 to_data = read_tbt(trackone_path)
@@ -76,6 +105,10 @@ particle = to_data.matrices[0]
 
 Xs = pd.DataFrame(particle.X)
 Ys = pd.DataFrame(particle.Y)
+
+
+# TODO: here I would have to add the noise
+
 
 # -----------------------------------
 #       HACEMOS LA TRAYECTORIA DIFF 
@@ -104,7 +137,7 @@ optics_elements_names = Xs.loc[::, 0].index
 #       LECTURA DEL TWISS
 # --------------------------------
 
-print(f"\nReading twiss data from {twiss_path}")
+print(f"Reading twiss data from {twiss_path}")
 
 twiss_data = pd.DataFrame(tfs.read(twiss_path))
 
@@ -123,7 +156,7 @@ twiss_data = (
 
 
 avermax_x, avermax_y = avermax(twiss_data, Xs, Ys, 
-                               arc = arc, ref_bpm = reference_bpm,
+                               arc, reference_bpm, _treshold,
                                log = True)
 
 
@@ -143,29 +176,36 @@ Jx, Jy, deltax, deltay  = calculate_APJ(twiss_data, avermax_x, avermax_y, last_A
 
 
 
-print("\n\t\t SAVING THE APJ FILES")
+print(f"-> Saving APJ files in {save_path}...")
 
-save_APJ_var(0, S, NAMES, Jx, "HmaxAPJaction_nofilt.sdds")
-save_APJ_var(0, S, NAMES, deltax, "HmaxAPJphase_nofilt.sdds")
-save_APJ_var(1, S, NAMES, deltay, "VmaxAPJphase_nofilt.sdds")
-save_APJ_var(1, S, NAMES, Jy, "VmaxAPJaction_nofilt.sdds")
+save_APJ_var(0, S, NAMES, Jx, "HAction.sdds")
+save_APJ_var(0, S, NAMES, deltax, "HPhase.sdds")
+save_APJ_var(1, S, NAMES, deltay, "VPhase.sdds")
+save_APJ_var(1, S, NAMES, Jy, "VAction.sdds")
 
-print("\n\nFinished APJ calculation")
 
-plt.plot(S, Jx)
-plt.title("Jx")
-plt.show()
+print(""" 
+\t\tF i n i s h e d   A P J   c a l c u l a t i o n
+\t\t                                  Version alpha""" )
 
-plt.plot(S, Jy)
-plt.title("Jy")
-plt.show()
 
-plt.plot(S, deltax)
-plt.title("deltax")
-plt.show()
+# Plot if desired
+if plot:
+    print("\n--> Plotting APJ variables\n")
+    plt.plot(S, Jx)
+    plt.title("Jx")
+    plt.show()
 
-plt.plot(S, deltay)
-plt.title("deltay")
-plt.show()
+    plt.plot(S, Jy)
+    plt.title("Jy")
+    plt.show()
+
+    plt.plot(S, deltax)
+    plt.title("deltax")
+    plt.show()
+
+    plt.plot(S, deltay)
+    plt.title("deltay")
+    plt.show()
 
 

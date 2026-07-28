@@ -1,4 +1,7 @@
-# Inputs paths for the nominal files
+#   --------------------
+#     GENERAL OPTIONS
+#   --------------------
+
 [LatticeFiles]
 
 # Main path where the sequence and beam params are
@@ -21,6 +24,7 @@ optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "K1L"]
 debug = false       # If true, MADX will log to console 
 
 
+
 [BeamParameters]
 # Parameters for the beam to simulate. They will overwrite those in the parameters file
 # TODO: make this work and make it check we have a parameters file
@@ -28,11 +32,13 @@ debug = false       # If true, MADX will log to console
 # particle = "positron"
 
 
+
 [TrackParameters]
+# Parameters for the tracking simulation, such as injection parameters, number of turns and methods
 
 # Random initial positions (to change the phase)
 random_positions = true
-random_velocities = false
+random_velocities = true
 
 # Random sigmas to create the initial injection conditions
 x_sigma = 0.000010
@@ -47,12 +53,17 @@ px = 0.0
 py = 0.0
 
 # Other parameters
-N = 100             # Number of turns  
+N = 256             # Number of turns  
 
-# -- PTC parameters (the better, the slower)
+# -- PTC parameters (the better, the slower [well not really it is pretty fast even usin the SixTrack with high order of integrations])
 model = 3           # What model to usefor PTC (1. Default drift-kick-drift, 2. Matrix-Kick Matrix, 3. SixTrack)
-method = 2          # Order of the integrations
-nst = 2             # Integration steps
+method = 4          # Order of the integrations
+nst = 4             # Integration steps
+
+
+# TODO: could be that xtrack could be better for GPU acceleration, but first I want to make this whole thing work
+
+
 
 #   -----------------------------
 #    SYSTEM'S INPUTS AND OUTPUTS
@@ -65,9 +76,11 @@ measure_twiss = true            # Twiss of the BPMs (or other measuring elements
 optics_twiss = true             # Twiss of the optics (quadrupoles)
 
 
+# IMPORTANT: these nominal files will be used throughout the code, cannot be changed
 main_output_path = "outputs/"
 measure_path = "nominal_measurements_twiss.tfs"
 optics_path = "nominal_quads_twiss.tfs"
+
 
 [ErrorsSystem]
 
@@ -83,4 +96,40 @@ modifications_path = "inputs/IR_errors.madx"
 main_output_path = "outputs/errors/"
 measure_path = "E_measurements_twiss.tfs"
 optics_path = "E_quads_twiss.tfs"
-track_path = "E_trackone"
+track_path = "E_track"
+APJ_path = "APJ/"
+
+# Plot options
+plot_APJ = true
+
+# Reference BPM and arcs for APJ calculation
+ref_bpm = "BPM_QD0AL.0"
+left_arc = [15000, 20000]
+right_arc = [23500, 30000]
+avermax_TH = 0.5               # Avermax \Psi treshold (in units of pi)
+
+[CorrectionsSystem]
+
+# Which twiss files to create for the nominal lattice
+measure_twiss = true            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = true             # Twiss of the optics (quadrupoles)
+TBT_track = true                # Wether or not to track
+
+# Input options
+modifications_path = "inputs/IR_errors+corrections.madx"
+
+# Output options
+main_output_path = "outputs/corrections/"
+measure_path = "C_measurements_twiss.tfs"
+optics_path = "C_quads_twiss.tfs"
+track_path = "C_track"
+APJ_path = "APJ/"
+
+# Reference BPM and arcs for APJ calculation
+ref_bpm = "BPM_QD0AL.0"
+left_arc = [15000, 20000]
+right_arc = [23500, 30000]
+avermax_TH = 0.45               # Avermax \Psi treshold (in units of pi)
+
+# Plot options
+plot_APJ = false
