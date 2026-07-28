@@ -236,7 +236,7 @@ match system:
         twiss_path = main_out + system_config["measure_path"]                # Output file for the nominal twiss
         quadrupoles_path = main_out + system_config["optics_path"]           # Output file for the quads strengths and lengths
 
-        simulate_system(parameters_path, sequence_path, create_measurement_twiss, create_quads_data, twiss_path, quadrupoles_path, debug)
+        simulate_system(parameters_path, sequence_path, create_measurement_twiss, create_quads_data, twiss_path, quadrupoles_path, None, debug)
 
     # In general, the errors and corrections system should behave the same
     case _:
