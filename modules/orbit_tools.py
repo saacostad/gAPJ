@@ -25,12 +25,15 @@ def phase_map(phase):
 #               AVERMAX FUNCTION
 #--------------------------------------------------------------------------------------
 
-def avermax(twiss_data, Xs, Ys, arc, ref_bpm, treshold = np.pi/7, log = False):
+def avermax(twiss_data, Xs, Ys, arc, ref_bpm, treshold, log = False):
     """ This function takes the twiss data, orbits (x and y) and other parameters to calculate the avermax trajectory """
 
     if log: 
         print(f"""
-        \n \t\tSTARTING AVERMAX TRAJECTORY CALCULATION \n \t\t   Total turns read from trackone: {len(Xs.columns)}\n\nUsing a treshold: {treshold%np.pi:.2f}pi
+STARTING AVERMAX TRAJECTORY CALCULATION
+-> Total turns read from trackone: {len(Xs.columns)}
+-> Using a treshold: {treshold%np.pi:.2f}pi
+-> Reference BPM: {ref_bpm}
         """)
 
     # We get the reference phases
@@ -111,9 +114,9 @@ def avermax(twiss_data, Xs, Ys, arc, ref_bpm, treshold = np.pi/7, log = False):
         
     
     if log:
-        print(f"Used {count_x} X orbits from a total of {(count_x / len(Xs.columns))*100:.2f}% for the avermax trajectory")
-        print(f"Used {count_y} Y orbits from a total of {(count_y / len(Xs.columns))*100:.2f}% for the avermax trajectory")
-        print(f"AVERMAX trajectory calculation finished. \n")
+        print(f"-> Used {count_x} X orbits from a total of {(count_x / len(Xs.columns))*100:.2f}% for the avermax trajectory")
+        print(f"-> Used {count_y} Y orbits from a total of {(count_y / len(Xs.columns))*100:.2f}% for the avermax trajectory")
+        print(f"\nAVERMAX trajectory calculation finished.")
 
 
     return avermax_x, avermax_y

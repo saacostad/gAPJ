@@ -3,8 +3,13 @@ This module contains all the functions needed to calculate the Action and Phase 
 """
 
 import numpy as np 
+import warnings         # So I get prettier warnings
 
+# Custom warning to make everything cleaner
+def custom_warning(message, category, filename, lineno, file=None, line=None):
+    print(f" -W- {filename.split('/')[-1]}{lineno} → {message}")
 
+warnings.showwarning = custom_warning
 # -----     CALCULATION USING THE 2009 FORMULAS
 def calculate_J(BETA, PSI, Z):
     """
@@ -79,10 +84,14 @@ def calculate_J_and_P(BETA, PSI, Z):
     psi_2 = psi_rad[1:]
     dpsi = psi_1 - psi_2
 
-
-    # Creation of the expansion coefficients
-    A = (z_1 * np.sin(psi_2) - z_2 * np.sin(psi_1)) / (np.sin(dpsi))
-    B = (z_2 * np.cos(psi_1) - z_1 * np.cos(psi_2)) / (np.sin(dpsi))
+    # Avoid singularities 
+    sin_dpsi = np.sin(dpsi)
+    mask = np.abs(sin_dpsi) < 1e-12
+    sin_dpsi[mask] = np.sign(sin_dpsi[mask]) * 1e-12
+    
+    # TODO: Find a way so the denominator cannot be 0
+    A = (z_1 * np.sin(psi_2) - z_2 * np.sin(psi_1)) / (sin_dpsi)
+    B = (z_2 * np.cos(psi_1) - z_1 * np.cos(psi_2)) / (sin_dpsi)
 
     # J will simply be (A^2 + B^2)/2
     J = (np.power(A, 2) + np.power(B, 2)) / 2.
@@ -112,8 +121,7 @@ def calculate_APJ(TWISS, X, Y, mean = False, last_APJ = False, arcs = None):
     """
 
     if last_APJ: 
-        print(f"""
-        \n \t\t STARTING APJ CALCULATION
+        print(f"""STARTING APJ CALCULATION
         """)
 
     BETX = np.asarray(TWISS["BETX"].to_numpy())
@@ -138,10 +146,10 @@ def calculate_APJ(TWISS, X, Y, mean = False, last_APJ = False, arcs = None):
         return np.mean(Jx), np.mean(Jy), np.angle(np.mean(np.exp(1j * px))), np.angle(np.mean(np.exp(1j * py))) 
 
     if last_APJ: 
-        print(f"Finished APJ calculation")
+        print(f"-> Finished APJ calculation")
         
         if arcs != None: 
-            print("Stimated APJ jumps: TODO")
+            print("-> Stimated APJ jumps: TODO")
 
     return Jx, Jy, px, py
 
