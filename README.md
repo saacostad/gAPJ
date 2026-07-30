@@ -19,6 +19,7 @@ New code for Action and Phase Jump (APJ) method for magnetic error corrections u
 5. Generalize the beam parameters entries.
 6. Check if using Xtrack would improve runtimes.
 7. Make iteratibility possible (whatever it is spelled).
+8. KINDA IMPORTANT: check if the nominal orbit simulation is the appropiate.
 
 # Run the project
 

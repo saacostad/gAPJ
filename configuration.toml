@@ -5,9 +5,9 @@
 [LatticeFiles]
 
 # Main path where the sequence and beam params are
-main_input_path = "inputs/lattices/higgs/"
-sequence_path = "fccee_h.madx"          # Name of the file with the seq
-params_path = "h_parameter_table.txt"   # Name of the file with the beam's params
+main_input_path = "inputs/lattices/tau/"
+sequence_path = "fccee_t.madx"          # Name of the file with the seq
+params_path = "t_parameter_table.txt"   # Name of the file with the beam's params
 
 # Name of the sequence
 sequence_name = "fccee_p_ring"
@@ -21,7 +21,7 @@ measure_parameters = ["name", "s", "betx", "bety", "mux", "muy"]
 optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "K1L"]
 
 # Debug flag 
-debug = false       # If true, MADX will log to console 
+debug = true       # If true, MADX will log to console 
 
 
 
@@ -81,6 +81,7 @@ main_output_path = "outputs/"
 measure_path = "nominal_measurements_twiss.tfs"
 optics_path = "nominal_quads_twiss.tfs"
 
+# -- Integrals of the lattice functions per element
 
 [ErrorsSystem]
 

@@ -12,8 +12,10 @@ import tomllib                  # This is to parse the config file
 
 # Libraries for madx
 from cpymad.madx import Madx
+from modules.data_tools.calc_integrals import calculate_integral
 from modules.data_tools.read_beam_parameters import read_beam_parameters  # To parse the parameters .txt
 from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
+from modules.data_tools.calc_integrals import calculate_integral
 
 # I will import this one to get rid of a troublesome file 
 import os
@@ -24,10 +26,11 @@ import os
 # MAIN FUNCTIONS
 # ---------------------------
 def simulate_system(parameters_path, sequence_path, 
-                 create_measurement_twiss, create_quads_data,
-                 twiss_path, quadrupoles_parameters_path, track_path,
-                 debug, errors_path = None, 
-                 track_flag = False, tracking_config = None):
+                    create_measurement_twiss, create_quads_data,
+                    twiss_path, quadrupoles_parameters_path, track_path,
+                    debug, errors_path = None, 
+                    track_flag = False, tracking_config = None,
+                    make_integrals = False):
 
     # -- Create a mad-x connection
     # Read beam parameters
@@ -53,9 +56,11 @@ def simulate_system(parameters_path, sequence_path,
         madx.input(f'CALL, FILE="{sequence_path}";')
     else: 
         print("No option was given.")
+        return
     
 
     madx.input(f'USE, SEQUENCE="{sequence_name}";')     # Select the lattice to use
+
     # If we have errors or corrections, apply them
     if errors_path != None:
         print(f"Adding modifications in {errors_path}")
@@ -96,6 +101,18 @@ def simulate_system(parameters_path, sequence_path,
 
         # Call the twiss function
         madx.twiss(file=quadrupoles_parameters_path)
+
+
+
+        # -- Calculate the integrals 
+        if make_integrals: 
+
+            # This function will calculate the integrals to not make this script too messy
+            calculate_integral(madx, sequence_name, optics_class)
+
+
+
+            
 
 
 
@@ -236,7 +253,7 @@ match system:
         twiss_path = main_out + system_config["measure_path"]                # Output file for the nominal twiss
         quadrupoles_path = main_out + system_config["optics_path"]           # Output file for the quads strengths and lengths
 
-        simulate_system(parameters_path, sequence_path, create_measurement_twiss, create_quads_data, twiss_path, quadrupoles_path, None, debug)
+        simulate_system(parameters_path, sequence_path, create_measurement_twiss, create_quads_data, twiss_path, quadrupoles_path, None, debug, make_integrals=True)
 
     # In general, the errors and corrections system should behave the same
     case _:
