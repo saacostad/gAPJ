@@ -1,3 +1,8 @@
+"""
+This script constains everything needed for the calculation of the QGCs 
+according to the general model
+"""
+
 import numpy as np 
 
 
