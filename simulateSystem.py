@@ -15,7 +15,6 @@ from cpymad.madx import Madx
 from modules.data_tools.calc_integrals import calculate_integral
 from modules.data_tools.read_beam_parameters import read_beam_parameters  # To parse the parameters .txt
 from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
-from modules.data_tools.calc_integrals import calculate_integral
 
 # I will import this one to get rid of a troublesome file 
 import os
@@ -106,9 +105,14 @@ def simulate_system(parameters_path, sequence_path,
 
         # -- Calculate the integrals 
         if make_integrals: 
+            
+            # -- Sign calculation: here we'll check which sign the integrals will have (beam direction * particle's charge)
+            particle = beam_params['PARTICLE']
+            direction = beam_params['BV']
 
             # This function will calculate the integrals to not make this script too messy
-            calculate_integral(madx, sequence_name, optics_class)
+            calculate_integral(madx, 1, optics_class)
+            # TODO: add the sign to actually make this work
 
 
 

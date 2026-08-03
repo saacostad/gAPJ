@@ -26,10 +26,21 @@ debug = true       # If true, MADX will log to console
 
 
 [BeamParameters]
-# Parameters for the beam to simulate. They will overwrite those in the parameters file
-# TODO: make this work and make it check we have a parameters file
+# Parameters for the beam to simulate. 
+# Telling the mass, charge and direction of the beam is mandatory, as these parameters don't usually appear on the parameter's table
+# Set false to choose the param on the table
 
-# particle = "positron"
+charge = -1         # Charge of the particle [in units of e]
+mass = 0.511        # Mass of the particle [GeV/c^2]
+direction = 1       # Direction (1 for left to right, -1 the other way around)
+radiate = false     # Simulate syncrotron radiation
+
+# These options are usually set on the parameter's table
+energy = false          # Energy of the beam [GeV]
+current = false         # [Amps]
+emittance_x = false     # [m*rad]
+emittance_y = false     # [m*rad]
+
 
 
 
