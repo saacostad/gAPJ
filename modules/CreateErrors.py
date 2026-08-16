@@ -55,6 +55,12 @@ parser.add_argument(
         dest="beta_test",
         action="store_true"
         )
+parser.add_argument(
+        "-of", "--output_format",
+        help = "Select wheter we want this output to be in MAD-X or XTrack format",
+        dest = "format",
+        choices=["MADX","XTrack"]
+        )
 
 args = parser.parse_args()
 
@@ -117,8 +123,15 @@ else:
             # We'll write the errors for each of the quadrupoles 
             err = np.random.normal(0.0, float(args.random_sigma))
             sign = "+" if err > 0.0 else "-"
-            print(f"{name}->K1 = {name}->K1{sign}{abs(err)};", file = e_f)
-            print(f"{name}->K1 = {name}->K1{sign}{abs(err)};", file = c_f)
+
+            if args.format == "MADX":
+                print(f"{name}->K1 = {name}->K1{sign}{abs(err)};", file = e_f)
+                print(f"{name}->K1 = {name}->K1{sign}{abs(err)};", file = c_f)
+            elif args.format == "XTrack":
+                print(f"{name}\t{err}", file = e_f)
+                print(f"{name}\t{err}", file = c_f)
+            else: 
+                print("No valid format. Try `--output_format MADX/XTrack`")
     else:
         for _, QP in filtered_df.iterrows():
             
@@ -127,9 +140,15 @@ else:
             if "IP" in name:
                 continue
 
-            # We'll write the errors for each of the quadrupoles 
-            print(f"{name}->K1 = {name}->K1+0.0;", file = e_f)
-            print(f"{name}->K1 = {name}->K1+0.0;", file = c_f)
+            if args.format == "MADX":
+                # We'll write the errors for each of the quadrupoles 
+                print(f"{name}->K1 = {name}->K1+0.0;", file = e_f)
+                print(f"{name}->K1 = {name}->K1+0.0;", file = c_f)
+            elif args.format == "XTrack":
+                print(f"{name}\t0.0", file = e_f)
+                print(f"{name}\t0.0", file = c_f)
+            else: 
+                print("No valid format. Try `--output_format MADX/XTrack`")
 
 e_f.close()
 c_f.close()

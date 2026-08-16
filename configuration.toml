@@ -5,24 +5,23 @@
 [LatticeFiles]
 
 # Main path where the sequence and beam params are
-main_input_path = "inputs/lattices/tau/"
-sequence_path = "fccee_t.madx"          # Name of the file with the seq
-params_path = "t_parameter_table.txt"   # Name of the file with the beam's params
+main_input_path = "inputs/lattices/higgs/"
+sequence_path = "fccee_h.madx"          # Name of the file with the seq
+params_path = "h_parameter_table.txt"   # Name of the file with the beam's params
 
 # Name of the sequence
-sequence_name = "fccee_p_ring"
+sequence_name = false			# Name of the sequence. If set to false, take the first sequence available
 
 # Measuring elements keywords
-measure_class = ["marker"]
-optics_class = ["quadrupole"]
+measure_class = ["Marker"]
+optics_class = ["Quadrupole"]
 
 # What parameters use for the twiss
 measure_parameters = ["name", "s", "betx", "bety", "mux", "muy"]
-optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "K1L"]
+optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "alfx", "alfy"]
 
 # Debug flag 
 debug = true       # If true, MADX will log to console 
-
 
 
 [BeamParameters]
@@ -30,18 +29,19 @@ debug = true       # If true, MADX will log to console
 # Telling the mass, charge and direction of the beam is mandatory, as these parameters don't usually appear on the parameter's table
 # Set false to choose the param on the table
 
-charge = -1         # Charge of the particle [in units of e]
-mass = 0.511        # Mass of the particle [GeV/c^2]
-direction = 1       # Direction (1 for left to right, -1 the other way around)
-radiate = false     # Simulate syncrotron radiation
+energy = 120.0      		# Energy of the beam [GeV]
+charge = -1         		# Charge of the particle [in units of e]
+mass = 0.511        		# Mass of the particle [MeV/c^2]
+direction = -1       		# Direction (1 for left to right, -1 the other way around)
+radiate = false     		# Simulate syncrotron radiation
+
+
 
 # These options are usually set on the parameter's table
-energy = false          # Energy of the beam [GeV]
-current = false         # [Amps]
-emittance_x = false     # [m*rad]
-emittance_y = false     # [m*rad]
-
-
+# TODO: add these if they're even needed
+current = false         	# [Amps]
+emittance_x = false     	# [m*rad]
+emittance_y = false     	# [m*rad]
 
 
 [TrackParameters]
@@ -64,21 +64,14 @@ px = 0.0
 py = 0.0
 
 # Other parameters
-N = 256             # Number of turns  
-
-# -- PTC parameters (the better, the slower [well not really it is pretty fast even usin the SixTrack with high order of integrations])
-model = 3           # What model to usefor PTC (1. Default drift-kick-drift, 2. Matrix-Kick Matrix, 3. SixTrack)
-method = 4          # Order of the integrations
-nst = 4             # Integration steps
-
-
-# TODO: could be that xtrack could be better for GPU acceleration, but first I want to make this whole thing work
-
+N = 256             	# Number of turns  
+context = "CPU"		# Runtime context: CPU [1 thread, usually fastest], CPUN [to use N threads], CUPY, OPENCL
 
 
 #   -----------------------------
 #    SYSTEM'S INPUTS AND OUTPUTS
 #   -----------------------------
+
 
 [NominalSystem]
 
@@ -89,10 +82,12 @@ optics_twiss = true             # Twiss of the optics (quadrupoles)
 
 # IMPORTANT: these nominal files will be used throughout the code, cannot be changed
 main_output_path = "outputs/"
-measure_path = "nominal_measurements_twiss.tfs"
-optics_path = "nominal_quads_twiss.tfs"
+measure_path = "nominal_measurements_twiss"		# Note: will be saved in packet format to read faster, 
+optics_path = "nominal_quads_twiss"			# if needed in .tfs, then activate save_tfs option
+integrals_path = "nominal_optics_integrals"		 
 
-# -- Integrals of the lattice functions per element
+save_tfs = true						# Select wether we'll save the .tfs file
+
 
 [ErrorsSystem]
 
@@ -106,10 +101,12 @@ modifications_path = "inputs/IR_errors.madx"
 
 # Output options
 main_output_path = "outputs/errors/"
-measure_path = "E_measurements_twiss.tfs"
-optics_path = "E_quads_twiss.tfs"
+measure_path = "E_measurements_twiss"
+optics_path = "E_quads_twiss"
 track_path = "E_track"
 APJ_path = "APJ/"
+
+save_tfs = false					# Select wether we'll save the .tfs file
 
 # Plot options
 plot_APJ = true
@@ -136,6 +133,8 @@ measure_path = "C_measurements_twiss.tfs"
 optics_path = "C_quads_twiss.tfs"
 track_path = "C_track"
 APJ_path = "APJ/"
+
+save_tfs = false					# Select wether we'll save the .tfs file
 
 # Plot options
 plot_APJ = false
