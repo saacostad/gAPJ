@@ -80,8 +80,9 @@ measure_twiss = true            # Twiss of the BPMs (or other measuring elements
 optics_twiss = true             # Twiss of the optics (quadrupoles)
 
 
-# IMPORTANT: these nominal files will be used throughout the code, cannot be changed
-main_output_path = "outputs/"
+# IMPORTANT: these nominal files will be used throughout the code, cannot be changed. 
+# For the program to work, all of them have to exist
+main_output_path = "outputs/nominal"
 measure_path = "nominal_measurements_twiss"		# Note: will be saved in packet format to read faster, 
 optics_path = "nominal_quads_twiss"			# if needed in .tfs, then activate save_tfs option
 integrals_path = "nominal_optics_integrals"		 

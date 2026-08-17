@@ -30,10 +30,10 @@ import os
 # ---------------------------
 def simulate_system(beam_params ,sequence_path, sequence_name,
                     create_measurement_twiss, create_quads_data,
-                    twiss_path, quadrupoles_path, track_path,
+                    main_path, twiss_path, quadrupoles_path, track_path,
                     debug, errors_path = None, 
                     track_flag = False, tracking_config = None,
-                    make_integrals = False, _save_tfs = False):
+                    make_integrals = False, _save_tfs = False, _integrals_path = False):
 
     # -- Create a mad-x connection
     # Read beam parameters
@@ -65,12 +65,11 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
    
 
     print(f"  -> Creating reference particle")
-    print(f"""  \\___ Energy = {beam_params["energy"]:.3g} eV
-      \\__ Mass = {beam_params["mass"]:.3g} eV
-      \\__ Charge = {beam_params["charge"]} e 
-      \\__ Direction = {beam_params["dir"]}
-      \\__ Radiation = {beam_params["radiate"]}
-    """)
+    print(f"""  \\__ Energy = {beam_params["energy"]:.3g} eV
+  \\__ Mass = {beam_params["mass"]:.3g} eV
+  \\__ Charge = {beam_params["charge"]} e 
+  \\__ Direction = {beam_params["dir"]}
+  \\__ Radiation = {beam_params["radiate"]}""")
 
     # TODO: gotta add it when the direction is like the other way around ykwim
     line.particle_ref = xt.Particles(
@@ -123,13 +122,13 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         pandas_data = filtered_twiss.to_pandas()
         pandas_data.columns = pandas_data.columns.str.upper()
         
-        print(f"  -> Saving twiss file to {twiss_path}.parquet")
-        pandas_data.to_parquet(f"{twiss_path}.parquet", engine="pyarrow")       # Save dataframe in this format to read faster
+        print(f"  -> Saving twiss file to {main_path}/{twiss_path}.parquet")
+        pandas_data.to_parquet(f"{main_path}/{twiss_path}.parquet", engine="pyarrow")       # Save dataframe in this format to read faster
 
         # Save to tfs if needed
         if _save_tfs:
-            print(f"  \\__ Saving twiss file to {twiss_path}.tfs")
-            filtered_twiss.to_tfs(twiss_path+".tfs")
+            print(f"  \\__ Saving twiss file to {main_path}/tfs/{twiss_path}.tfs")
+            filtered_twiss.to_tfs(f"{main_path}/tfs/{twiss_path}.tfs")
 
 
     if create_quads_data:
@@ -174,16 +173,29 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
                     phys_params[['NAME', "K1", "L"]],
                     on = 'NAME', how = 'left')
             
+            print("  \\__ Calculating integrals")
             # With this, I have everything needed to calculate the integrals
+            integrals_data = calculate_integrals(pandas_data, beam_parameters)
+            
+            # We save the dataframe
+            print(f"  \\__ Saving integrals data to {main_path}/{integrals_path}.parquet")
+            integrals_data.to_parquet(f"{main_path}/{integrals_path}.parquet", engine="pyarrow")
+            
+            # Also save the tfs
+            if _save_tfs:
+                print(f"  \\__ Saving integrals data to {main_path}/tfs/{integrals_path}.tfs")
+                tfs.write(f"{main_path}/tfs/{integrals_path}.tfs", integrals_data)
+            
 
-        print(f"  -> Saving twiss file to {quadrupoles_path}.parquet")
-        pandas_data.to_parquet(f"{quadrupoles_path}.parquet", engine="pyarrow")       # Save dataframe in this format to read faster
+
+        print(f"  -> Saving twiss file to {main_path}/{quadrupoles_path}.parquet")
+        pandas_data.to_parquet(f"{main_path}/{quadrupoles_path}.parquet", engine="pyarrow")       # Save dataframe in this format to read faster
 
         
         # Save to tfs if needed
         if _save_tfs:
-            print(f"  \\__ Saving twiss file to {quadrupoles_path}.tfs")
-            filtered_twiss.to_tfs(quadrupoles_path+".tfs")       
+            print(f"  \\__ Saving twiss file to {main_path}/tfs/{quadrupoles_path}.tfs")
+            filtered_twiss.to_tfs(f"{main_path}/tfs/{quadrupoles_path}"+".tfs")       
 
 
 
@@ -286,14 +298,15 @@ match system:
 
         # -- Paths to nominal output files
         main_out = system_config["main_output_path"]
-        twiss_path = main_out + system_config["measure_path"]                # Output file for the nominal twiss
-        quadrupoles_path = main_out + system_config["optics_path"]           # Output file for the quads strengths and lengths
+        twiss_path = system_config["measure_path"]                # Output file for the nominal twiss
+        quadrupoles_path = system_config["optics_path"]           # Output file for the quads strengths and lengths
+        integrals_path = system_config["integrals_path"]
 
         # -- Save .tfs files 
         save_tfs = system_config["save_tfs"]
         
         # TODO: I may have to add the make integrals option
-        simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, twiss_path, quadrupoles_path, None, debug, make_integrals=True, _save_tfs = save_tfs)
+        simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_out, twiss_path, quadrupoles_path, None, debug, make_integrals=True, _save_tfs = save_tfs, _integrals_path = integrals_path)
 
     # In general, the errors and corrections system should behave the same
     case _:
@@ -315,7 +328,7 @@ match system:
         # -- Save .tfs files 
         save_tfs = system_config["save_tfs"]
 
-        simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, twiss_path, quadrupoles_path, track_path, debug, errors_path, track_flag, tracking_config, _save_tfs = save_tfs)
+        simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_path, twiss_path, quadrupoles_path, track_path, debug, errors_path, track_flag, tracking_config, _save_tfs = save_tfs)
 
 
 print(f"""
