@@ -286,17 +286,26 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         turns_range = X.shape[0]
         elements_range = X.shape[2]
         track_data = list()             # With this list we'll create the pandas dataframe
-        for turn in range(turns_range):
-            for element in range(elements_range):
 
-                row = {
-                        "NAME": NAMES[element],
-                        "TURN": turn,
-                        "S": S[element],
-                        "X": X[turn, 0, element],
-                        "Y": Y[turn, 0, element]}
+        for element in range(elements_range):
+            # Create the first dicts
+            rowx = {}                   # Reinitialize them just in case
+            rowy = {}
 
-                track_data.append(row)
+            rowx = {
+                    "NAME": NAMES[element],
+                    "PLANE": "x"}
+            rowy = {
+                    "NAME": NAMES[element],
+                    "PLANE": "y"}
+
+            for turn in range(turns_range):
+                # Then we add  the turns
+                rowx[f"{turn}"] = X[turn, 0, element]
+                rowy[f"{turn}"] = Y[turn, 0, element]
+            
+            track_data.append(rowx)
+            track_data.append(rowy)
 
         # Now we convert it to a dataframe
         trackone = pd.DataFrame(track_data)

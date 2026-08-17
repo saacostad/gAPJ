@@ -10,7 +10,7 @@ import numpy as np      # Porque siempre va
 from scipy.optimize import least_squares as ls      # Para hacer el ajuste del avermax
 import pandas as pd     # Para poder usar todo eso 
 
-from modules.ActionPhaseJump import calculate_APJ
+from modules.APJ.ActionPhaseJump import calculate_APJ
 
 
 # --------------------------------------------------

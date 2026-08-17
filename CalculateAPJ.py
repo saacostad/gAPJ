@@ -12,8 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # self-made modules
-from modules.ActionPhaseJump import calculate_APJ   
-from modules.orbit_tools import avermax   
+from modules.APJ.ActionPhaseJump import calculate_APJ   
+from modules.APJ.orbit_tools import avermax   
 from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
 
 # Parceros
@@ -78,9 +78,9 @@ print(f"Read from NominalSystem and {dic_key}System entry")
 reference_bpm = system_config["ref_bpm"]      # The s_e from where we'll select the avermax orbits
 
 # Paths
-trackone_path = system_config["main_output_path"] + system_config["track_path"] + "one"     # The original trackone path
-twiss_path = nominal_config["main_output_path"] + nominal_config["measure_path"]             # The twiss files to use    
-save_path = system_config["main_output_path"] + system_config["APJ_path"]                   # Where to save the APJ files
+trackone_path = system_config["main_output_path"]+ "/" + system_config["track_path"] + ".parquet"     # The original trackone path
+twiss_path = nominal_config["main_output_path"] + "/" +  nominal_config["measure_path"] + ".parquet"             # The twiss files to use    
+save_path = system_config["main_output_path"] + "/" + system_config["APJ_path"] + ".parquet"                   # Where to save the APJ files
 
 # The arcs of IP2 so we calculate the avermax traj
 arc =system_config["left_arc"] 
@@ -97,18 +97,29 @@ _treshold = system_config["avermax_TH"]      # Treshold to use for avermax calc
 # Messages to check the state of the script
 print(f"Reading turn-by-turn data from {trackone_path}...")
 
+"""
+Something like this if we were reading original trackone files
 # Se lee el TrackOne
-to_data = read_tbt(trackone_path)
-
+# to_data = read_tbt(trackone_path)         
 # Extraemos los datos
 particle = to_data.matrices[0]
 
 Xs = pd.DataFrame(particle.X)
 Ys = pd.DataFrame(particle.Y)
+"""
 
+# Read the .parquet data
+data = pd.read_parquet(trackone_path, engine="pyarrow")
+
+# Create 2 different dataframes for each axis
+Xs = data[data["PLANE"] == "x"].drop(columns="PLANE")
+Ys = data[data["PLANE"] == "y"].drop(columns="PLANE")
+
+# We'll re-index
+Xs = Xs.set_index("NAME")
+Ys = Ys.set_index("NAME")
 
 # TODO: here I would have to add the noise
-
 
 # -----------------------------------
 #       HACEMOS LA TRAYECTORIA DIFF 
@@ -117,9 +128,9 @@ Ys = pd.DataFrame(particle.Y)
 print("Fitering betatron motion...")
 
 # Calculamos el promedio en cada BPM
-Xs_mean = np.asarray(np.mean(Xs, axis = 1))
-Ys_mean = np.asarray(np.mean(Ys, axis = 1))
-
+Xs_mean = Xs.mean(axis = 1).to_numpy()
+Ys_mean = Ys.mean(axis = 1).to_numpy()
+ 
 
 # TODO: without errors it works amazingly good if we add the mean
 # HACK: well there are still jumps but not that big. At least this will work to generalize the APJ
@@ -131,7 +142,7 @@ Xs = Xs_new
 Ys = Ys_new
 
 # Obtenemos los elementos en las optics de momento
-optics_elements_names = Xs.loc[::, 0].index
+optics_elements_names = Xs.index
 
 # --------------------------------
 #       LECTURA DEL TWISS
@@ -139,7 +150,7 @@ optics_elements_names = Xs.loc[::, 0].index
 
 print(f"Reading twiss data from {twiss_path}")
 
-twiss_data = pd.DataFrame(tfs.read(twiss_path))
+twiss_data = pd.read_parquet(twiss_path)
 
 # Filtro el twiss para que tenga los mismos elementos que el trackone
 twiss_data = (
@@ -156,7 +167,7 @@ twiss_data = (
 
 
 avermax_x, avermax_y = avermax(twiss_data, Xs, Ys, 
-                               arc, reference_bpm, _treshold,
+                               arc, reference_bpm.lower(), _treshold,
                                log = True)
 
 
