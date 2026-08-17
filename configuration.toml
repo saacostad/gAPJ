@@ -93,8 +93,8 @@ save_tfs = true						# Select wether we'll save the .tfs file
 [ErrorsSystem]
 
 # Which twiss files to create for the nominal lattice
-measure_twiss = true            # Twiss of the BPMs (or other measuring elements)
-optics_twiss = true             # Twiss of the optics (quadrupoles)
+measure_twiss = false            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = false             # Twiss of the optics (quadrupoles)
 TBT_track = true                # Wether or not to track
 
 # Input options (where the erros/corrections will be)
@@ -117,6 +117,7 @@ ref_bpm = "BPM_QD0AL.0"
 left_arc = [15000, 20000]
 right_arc = [23500, 30000]
 avermax_TH = 0.5               # Avermax \Psi treshold (in units of pi)
+
 
 [CorrectionsSystem]
 

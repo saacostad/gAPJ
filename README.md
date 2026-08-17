@@ -20,6 +20,7 @@ New code for Action and Phase Jump (APJ) method for magnetic error corrections u
 7. KINDA IMPORTANT: check if the nominal orbit simulation is the appropiate.
 8. Make things also be possible by reading data
 9. Make the software create the directories by it's own
+10. Maybe make arcs finder auto with the help of the arcs markers
 
 # Run the project
 
