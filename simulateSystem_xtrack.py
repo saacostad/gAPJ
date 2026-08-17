@@ -270,13 +270,45 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
          
         tracking_end = time.time()
 
-        print(f"  ---| Tracking time: {tracking_end - tracking_start:.2f} seconds.")
+        print(f"---| Tracking time: {tracking_end - tracking_start:.2f} seconds. \n")
 
         
         # -- Here we'll save up this data to something we can read later
+        print(f"  -> Formatting tracking data for saving")
+        mon = line.record_multi_element_last_track          # With this we retreive the monitor's data with shape (turns, particles [1], elements)
+        X = mon.get("x")
+        Y = mon.get("y")
+        S = measure_data["S"].to_numpy()
+        NAMES = mon.obs_names                   # TODO: are the names ordered?
         
 
+        # Now we have to convert this into a pandas dataframe
+        turns_range = X.shape[0]
+        elements_range = X.shape[2]
+        track_data = list()             # With this list we'll create the pandas dataframe
+        for turn in range(turns_range):
+            for element in range(elements_range):
 
+                row = {
+                        "NAME": NAMES[element],
+                        "TURN": turn,
+                        "S": S[element],
+                        "X": X[turn, 0, element],
+                        "Y": Y[turn, 0, element]}
+
+                track_data.append(row)
+
+        # Now we convert it to a dataframe
+        trackone = pd.DataFrame(track_data)
+    
+        # Here we save the data
+        print(f"  \\__ Saving trackone file to {main_path}/{track_path}.parquet")
+        trackone.to_parquet(f"{main_path}/{track_path}.parquet", engine="pyarrow")
+        
+        # Save it to tfs 
+        if _save_tfs:
+            print(f"  \\__ Saving trackone file to {main_path}/tfs/{track_path}.tfs")
+            tfs.write(f"{main_path}/tfs/{track_path}.tfs", trackone)
 
 
 
