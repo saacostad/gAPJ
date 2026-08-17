@@ -15,9 +15,11 @@ import tomllib                  # This is to parse the config file
 # Libraries for xsuite and pa calculations
 from xobjects import Method
 import xtrack as xt
+import xobjects as xo
 from xtrack.twiss import strengths
 from modules.calculateBetaIntegrals import calculate_integrals
 from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
+import time 
 
 # I will import this one to get rid of a troublesome file 
 # TODO: I should make it create the whole directory too
@@ -207,19 +209,84 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
     #   -------------------------------
 
     if track_flag:
-        
+         
         print(f"\nCreating track on measuring elements...")
-        print(f"-> Preparing tracking.") 
+        print(f"  -> Preparing tracking.") 
+        
+        # Time trackers just because I'm obsessed with them
+        tracking_start = time.time()
 
-        x = tracking_config["x"]
-        y = tracking_config["y"]
-        px = tracking_config["px"]
-        py = tracking_config["py"]
+        # -- Create the initial conditions of the tracking
+        _x = tracking_config["x"]
+        _y = tracking_config["y"]
+        _px = tracking_config["px"]
+        _py = tracking_config["py"]
+
+        if tracking_config["random_positions"]:
+            print("  -> Created random injection positions")
+            x = np.random.normal(0.0, tracking_config["x_sigma"])
+            y = np.random.normal(0.0, tracking_config["y_sigma"])
+        
+        if tracking_config["random_velocities"]:
+            print("  -> Created random injection velocities")
+            px = np.random.normal(0.0, tracking_config["px_sigma"])
+            py = np.random.normal(0.0, tracking_config["py_sigma"])   
+        
+
+        # -- Create the monitors we'll use (basically all of them)
+        # TODO: Maybe selecting it in the arcs would be better
+        
+        print("  -> Selecting monitors from the measure classes")
+        # We'll read the twiss file with the measurement class as it is fast and can use pandas to sort
+        measure_data = pd.read_parquet(f"{main_path}/{twiss_path}.parquet")
+        
+        # TODO: Maybe could be nice to have another criteria, but so far I think this is what we'll be used
+        monitors_names = measure_data["NAME"].to_list()
+
+        print(f"  -> Initilizing track with context {tracking_config["context"]}")
+        
+        # We will select the XTrack context
+        con = tracking_config["context"]
+        context = None 
+
+        if con == "CUPY":
+            context = xo.ContextCupy()
+        elif con == "OPENCL":
+            context = xo.ContextPyopencl()
+        elif con == "CPU":
+            context = xo.ContextCpu()
+        elif con.startswith("CPU"):
+            N = int(con.split("CPU")[1])
+            context = xo.ContextCpu(omp_num_threads = N)       # TODO: check this param because I forgot
+        
+        print(f"  \\__ Building tracker")
+        line.build_tracker(_context = context)
+        
+        print(f"  \\__ Creating initial particle")
+        particle = line.build_particles(x = _x, y = _y, px = _px, py = _py)
+
+        print(f"  -> Running track \n")
+        line.track(particle, num_turns = int(tracking_config["N"]), multi_element_monitor_at = monitors_names, with_progress = 10)
+         
+        tracking_end = time.time()
+
+        print(f"  ---| Tracking time: {tracking_end - tracking_start:.2f} seconds.")
+
+        
+        # -- Here we'll save up this data to something we can read later
+        
+
+
+
+
 
 
 # ---------------------------
 # MAIN SCRIPT
 # ---------------------------
+
+# Time tracking
+general_start = time.time()
 
 # Print welcome message
 print("""
@@ -334,7 +401,14 @@ match system:
         simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_out, twiss_path, quadrupoles_path, track_path, debug, errors_path, track_flag, tracking_config, _save_tfs = save_tfs)
 
 
+# Time tracking
+general_end = time.time()
+
 print(f"""
 F i n i s h e d   s y s t e m   s i m u l a t i o n
 written {dic_key} system in {main_out}
+Took {general_end - general_start:.2f} seconds :D
 """)
+
+
+
