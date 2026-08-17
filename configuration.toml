@@ -101,13 +101,13 @@ TBT_track = true                # Wether or not to track
 modifications_path = "inputs/IR_errors.madx"
 
 # Output options
-main_output_path = "outputs/errors/"
+main_output_path = "outputs/errors"
 measure_path = "E_measurements_twiss"
 optics_path = "E_quads_twiss"
 track_path = "E_track"
 APJ_path = "APJ/"
 
-save_tfs = false					# Select wether we'll save the .tfs file
+save_tfs = true					# Select wether we'll save the .tfs file
 
 # Plot options
 plot_APJ = true
@@ -135,7 +135,7 @@ optics_path = "C_quads_twiss.tfs"
 track_path = "C_track"
 APJ_path = "APJ/"
 
-save_tfs = false					# Select wether we'll save the .tfs file
+save_tfs = true					# Select wether we'll save the .tfs file
 
 # Plot options
 plot_APJ = false

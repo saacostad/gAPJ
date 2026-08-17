@@ -16,7 +16,6 @@ New code for Action and Phase Jump (APJ) method for magnetic error corrections u
 2. Add measurement noise to the BPMs.
 3. Add filters, specially on the APJ plots (and calculations).
 4. Create an overall orchestrator to merge all scripts. 
-5. Generalize the beam parameters entries.
 6. Make iteratibility possible (whatever it is spelled).
 7. KINDA IMPORTANT: check if the nominal orbit simulation is the appropiate.
 8. Make things also be possible by reading data
@@ -33,7 +32,6 @@ Every main script will take a command like parameter `system`, which will tell t
 ## Before running the project
 
 * Make sure you have the sequence of the accelerator in `.madx` format. 
-* So far, the code will read a `parameters.txt` file to get the beam it will use: particle, energy, emmisitivity....
 * Create a custom `errors.madx` file. You can use the `modules/createErrors.py` script for this.
 
 
