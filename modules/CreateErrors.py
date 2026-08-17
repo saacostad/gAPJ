@@ -4,7 +4,9 @@ This python script is made in order to create the TBT_from_PTC3.madx file for an
 
 import argparse
 import tfs as tfs 
+import pandas as pd
 import numpy as np
+import os
 
 
 # We start by parsing the inputs of the command like
@@ -90,7 +92,14 @@ def get_qp(df):
 input_file_path = args.input_file
 
 # We read the twiss file using tfs 
-df = tfs.read(input_file_path)
+# We check which file we're passing, if a .parquet or a .tfs
+if input_file_path.endswith(".parquet"):
+    df = pd.read_parquet(input_file_path)
+elif input_file_path.endswith(".tfs"):
+    df = tfs.read(input_file_path)
+else:
+    print("Invalid input format. It has to be either a `.parquet` or a `.tfs`")
+
 
 # We'll select only the quadrupoles and we'll check for the IPs 
 filtered_df = get_elements_around_ip(df, args.IP, float(args.window))
@@ -117,7 +126,7 @@ else:
 
             name = QP["NAME"] # We get the name of the QP  
             
-            if "IP" in name:
+            if "IP" in name.upper():
                 continue
 
             # We'll write the errors for each of the quadrupoles 
@@ -137,7 +146,7 @@ else:
             
             name = QP["NAME"] # We get the name of the QP  
 
-            if "IP" in name:
+            if "IP" in name.upper():
                 continue
 
             if args.format == "MADX":
