@@ -135,7 +135,8 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         print(f"\nCreating twiss for optics elements...")
         # -- CREATE QUADRUPOLE STRENGTHS AND LENGTHS PATHS
         # Tell which elements to keep
-        selected_names = [name for name in element_names if line[name].__class__.__name__ in optics_class]
+        selected_names = [name for name in element_names if line[name].__class__.__name__ in optics_class or name.lower().startswith("ip") ]
+                                                                                                            # TODO: maybe would be good if I generalized this
 
         # Perform the twiss
         print(f"  -> Performing twiss calculation.")
@@ -162,8 +163,10 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
 
             for name in selected_names:
                 names.append(name)
-                strengths.append(line[name].k1)
-                lengths.append(line[name].length)
+                
+                # We check atributes just because the ip's do not have these k1 or length
+                strengths.append(getattr(line[name], "k1", 0.0))
+                lengths.append(getattr(line[name], "length", 0.0))
 
             # Here I will convert this to a pandas dataframe
             phys_params = pd.DataFrame({'NAME': names, 'K1': strengths, 'L': lengths})
@@ -321,14 +324,14 @@ match system:
     
         # -- Paths to E/C output files
         main_out = system_config["main_output_path"]
-        twiss_path = main_out + system_config["measure_path"]                # Output file for the errors twiss
-        quadrupoles_path = main_out + system_config["optics_path"]           # Output file for the quads strengths and lengths
-        track_path = main_out + system_config["track_path"]                   # Output file for the trackone
+        twiss_path = system_config["measure_path"]                # Output file for the errors twiss
+        quadrupoles_path = system_config["optics_path"]           # Output file for the quads strengths and lengths
+        track_path = system_config["track_path"]                   # Output file for the trackone
 
         # -- Save .tfs files 
         save_tfs = system_config["save_tfs"]
 
-        simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_path, twiss_path, quadrupoles_path, track_path, debug, errors_path, track_flag, tracking_config, _save_tfs = save_tfs)
+        simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_out, twiss_path, quadrupoles_path, track_path, debug, errors_path, track_flag, tracking_config, _save_tfs = save_tfs)
 
 
 print(f"""
