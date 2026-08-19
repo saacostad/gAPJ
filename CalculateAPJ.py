@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 # self-made modules
 from modules.APJ.ActionPhaseJump import calculate_APJ   
-from modules.APJ.orbit_tools import avermax   
+from modules.APJ.orbit_tools import avermax_2017, avermax_2022
 from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
 
 # Parceros
@@ -89,6 +89,8 @@ rightArc = system_config["right_arc"]
 plot = system_config["plot_APJ"]
 
 _treshold = system_config["avermax_TH"]      # Treshold to use for avermax calc
+
+AVM_alg = system_config["avermax_algorythm"]
 
 # --------------------------------
 #       LECTURA DEL TRACKONE
@@ -166,9 +168,15 @@ twiss_data = (
 # ----------------------------------------------
 
 
-avermax_x, avermax_y = avermax(twiss_data, Xs, Ys, 
-                               arc, reference_bpm.lower(), _treshold,
-                               log = True)
+if AVM_alg == 2017: 
+    avermax_x, avermax_y = avermax_2017(twiss_data, Xs, Ys, 
+                                   arc, reference_bpm.lower(), _treshold,
+                                   log = True)
+elif AVM_alg == 2022: 
+    avermax_x, avermax_y = avermax_2022(twiss_data, Xs, Ys, 
+                                   arc, reference_bpm.lower(), _treshold,
+                                   log = True)
+
 
 
 

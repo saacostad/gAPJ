@@ -25,12 +25,13 @@ def phase_map(phase):
 #               AVERMAX FUNCTION
 #--------------------------------------------------------------------------------------
 
-def avermax(twiss_data, Xs, Ys, arc, ref_bpm, treshold, log = False):
-    """ This function takes the twiss data, orbits (x and y) and other parameters to calculate the avermax trajectory """
+def avermax_2017(twiss_data, Xs, Ys, arc, ref_bpm, treshold, log = False):
+    """ This function takes the twiss data, orbits (x and y) and other parameters to calculate the avermax trajectory
+    according to the 2017 paper, where the selected trajectories are the ones with max possible phase on the reference bpm."""
 
     if log: 
         print(f"""
-STARTING AVERMAX TRAJECTORY CALCULATION
+STARTING AVERMAX TRAJECTORY CALCULATION USING 2017's ALGORYTHM
 -> Total turns read from trackone: {len(Xs.columns)}
 -> Using a treshold: {treshold%np.pi:.2f}pi
 -> Reference BPM: {ref_bpm}
@@ -116,13 +117,56 @@ STARTING AVERMAX TRAJECTORY CALCULATION
     if log:
         print(f"-> Used {count_x} X orbits from a total of {(count_x / len(Xs.columns))*100:.2f}% for the avermax trajectory")
         print(f"-> Used {count_y} Y orbits from a total of {(count_y / len(Xs.columns))*100:.2f}% for the avermax trajectory")
-        print(f"\nAVERMAX trajectory calculation finished.")
+        print(f"\nAVERMAX trajectory calculation finished.\n")
 
 
     return avermax_x, avermax_y
 
 
 
+
+def avermax_2022(twiss_data, Xs, Ys, arc, ref_bpm, treshold = 0.0, log = False):
+    """ This function takes the twiss data, orbits (x and y) and other parameters to calculate the avermax trajectory
+    according to the 2022 paper, where all trajectories are used on one axis (this helps too for skew, tho its implementation is todo)"""
+
+    if log: 
+        print(f"""
+STARTING AVERMAX TRAJECTORY CALCULATION USING 2022's ALGORYTHM
+-> Total turns read from trackone: {len(Xs.columns)}
+-> Reference BPM: {ref_bpm}
+        """)
+    
+    # Create the lists for the turns
+    x_turns = list()
+    y_turns = list()
+
+    count_x = 0   # To count how many orbits we'll be using in the avermax, tho here it's kinda senseless as we'll use all of them
+    count_y = 0   
+    for col in Xs.columns:
+        
+        # Extract the turn
+        x_turn = Xs[col]
+        y_turn = Ys[col]
+        
+        # Extract the position at the reference bpm
+        x = x_turn[ref_bpm]
+        y = y_turn[ref_bpm]
+
+        # Add the turn depending on the sign of the position
+        x_turns.append(x_turn if x > 0 else -x_turn)
+        y_turns.append(y_turn if y > 0 else -y_turn)
+
+
+    # Lastly, we get the mean of the turns and multiply by 1000
+    avermax_x = np.mean(np.array(x_turns), axis = 0)
+    avermax_y = np.mean(np.array(y_turns), axis = 0)
+        
+    
+    if log:
+        print(f"\nAVERMAX trajectory calculation finished.\n")
+
+
+    return avermax_x, avermax_y
 
 
 

@@ -266,7 +266,7 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         particle = line.build_particles(x = _x, y = _y, px = _px, py = _py)
 
         print(f"  -> Running track \n")
-        line.track(particle, num_turns = int(tracking_config["N"]), multi_element_monitor_at = monitors_names, with_progress = 10)
+        line.track(particle, num_turns = int(tracking_config["turns"]), multi_element_monitor_at = monitors_names, with_progress = 10)
          
         tracking_end = time.time()
 

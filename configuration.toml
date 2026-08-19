@@ -5,9 +5,9 @@
 [LatticeFiles]
 
 # Main path where the sequence and beam params are
-main_input_path = "inputs/lattices/higgs/"
-sequence_path = "fccee_h.madx"          # Name of the file with the seq
-params_path = "h_parameter_table.txt"   # Name of the file with the beam's params
+main_input_path = "inputs/lattices/tau/"
+sequence_path = "fccee_t.madx"          # Name of the file with the seq
+params_path = "t_parameter_table.txt"   # Name of the file with the beam's params
 
 # Name of the sequence
 sequence_name = false			# Name of the sequence. If set to false, take the first sequence available
@@ -29,7 +29,7 @@ debug = true       # If true, MADX will log to console
 # Telling the mass, charge and direction of the beam is mandatory, as these parameters don't usually appear on the parameter's table
 # Set false to choose the param on the table
 
-energy = 120.0      		# Energy of the beam [GeV]
+energy = 182.5      		# Energy of the beam [GeV]
 charge = -1         		# Charge of the particle [in units of e]
 mass = 0.511        		# Mass of the particle [MeV/c^2]
 direction = -1       		# Direction (1 for left to right, -1 the other way around)
@@ -64,7 +64,7 @@ px = 0.0
 py = 0.0
 
 # Other parameters
-N = 256             	# Number of turns  
+turns = 256             	# Number of turns  
 context = "CPU"		# Runtime context: CPU [1 thread, usually fastest], CPUN [to use N threads], CUPY, OPENCL
 
 
@@ -93,8 +93,8 @@ save_tfs = true						# Select wether we'll save the .tfs file
 [ErrorsSystem]
 
 # Which twiss files to create for the nominal lattice
-measure_twiss = false            # Twiss of the BPMs (or other measuring elements)
-optics_twiss = false             # Twiss of the optics (quadrupoles)
+measure_twiss = 0            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = 0             # Twiss of the optics (quadrupoles)
 TBT_track = true                # Wether or not to track
 
 # Input options (where the erros/corrections will be)
@@ -107,7 +107,7 @@ optics_path = "E_quads_twiss"
 track_path = "E_track"
 APJ_path = "APJ/"
 
-save_tfs = true					# Select wether we'll save the .tfs file
+save_tfs = false					# Select wether we'll save the .tfs file
 
 # Plot options
 plot_APJ = true
@@ -116,7 +116,10 @@ plot_APJ = true
 ref_bpm = "BPM_QD0AL.0"
 left_arc = [15000, 20000]
 right_arc = [23500, 30000]
-avermax_TH = 0.5               # Avermax \Psi treshold (in units of pi)
+avermax_algorythm = 2022			# Which algorithm to use for avermax [2017, 2022]
+avermax_TH = 0.2               			# Avermax \Psi treshold (in units of pi)		(used for the 2017 avermax algorithm)
+
+
 
 
 [CorrectionsSystem]
@@ -145,5 +148,6 @@ plot_APJ = false
 ref_bpm = "BPM_QD0AL.0"
 left_arc = [15000, 20000]
 right_arc = [23500, 30000]
+avermax_algorythm = 2022			# Which algorithm to use for avermax [2017, 2022]
 avermax_TH = 0.5               # Avermax \Psi treshold (in units of pi)
 
