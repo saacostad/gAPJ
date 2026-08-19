@@ -116,19 +116,13 @@ def simulate_system(parameters_path, sequence_path,
 
 
 
-            
-
-
-
-
-
     #   -------------------------------
     #       CREATE TRACKING TABLE
     #   -------------------------------
 
     if track_flag:
         
-        print(f"\nCreating track on measuring elements...")
+        print(f"\nCreating track on measuring elements for {tracking_config["N"]} turns...")
         print(f"-> Preparing tracking.") 
 
         x = tracking_config["x"]

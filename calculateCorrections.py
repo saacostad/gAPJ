@@ -28,9 +28,9 @@ Using the APJ general formalism""")
 print("Parsing config file arguments...")
 
 lattice_config = None       # Configuration dict for general use
-system_config = None        # Configuration dict for special case use
-tracking_config = None      # Configuration for tracking
-beam_config = None          # Configuration for beam
+nomi_config = None
+errs_config = None
+cors_config = None
 
 # Read the config file and save it 
 with open("configuration.toml", "rb") as f:
@@ -38,22 +38,23 @@ with open("configuration.toml", "rb") as f:
     general_config = tomllib.load(f)
 
     lattice_config = general_config[f"LatticeFiles"]
+    nomi_config = general_config[f"NominalSystem"]
     errs_config = general_config[f"ErrorsSystem"]               # We need both systems: to know where the files are
     cors_config = general_config[f"CorrectionsSystem"]          # And to then know where to output
 
 print(f"Read from LatticeFiles, ErrorsSystem and CorrectionsSystem entries")
 
+
 # Path of the output files we'll be dealing with
 # TODO: by some strange reason, I coded J and delta to be MU and PHASE but now I'm too lazy to correct the names
-out_path = "fcc_ee_test_simulation/tbt_simu/sim_tbt"
+out_path = errs_config["main_output_path"] + "/APJ"
 MUXpath = out_path + "/HAction.sdds"
 MUYpath = out_path + "/VAction.sdds"
 PHASEXpath = out_path + "/HPhase.sdds"
 PHASEYpath = out_path + "/VPhase.sdds"
 
 # Path of the integrals file from where to get the lattice functions
-integrals_path = "fcc_ee_test_simulation/integrals.dat"
-
+integrals_path = nomi_config["main_output_path"] + "/" + nomi_config["integrals_path"] + ".parquet"
 
 # We'll create a function to calculate the APJ parameters easily
 def get_APJ_parameter(path, axis, left_arc, right_arc):
@@ -134,43 +135,12 @@ def get_observed_system(mxp, myp, pxp, pyp):
 def get_quadrupoles_lattice_functions(path, QPlist):
     """ Function that reads the integrals file generated and filters out the beta and phi functions
     for the quadrupoles that are being used at the moment """
-
-    betx = list()
-    bety = list()
-    mux = list()
-    muy = list()
-    names = list()      # Just in case so we do not get the names scrambled up
-
-    with open(path, 'r') as file:
-        
-        # Read the file
-        lines = file.readlines()
-        
-        # Iterate over the liens
-        for line in lines:
     
-            data = line.split()
-            
-            # data[3] contains the name of the quadrupole without the "" so there's no need to format
-            if data[3] in QPlist:
-
-                names.append(data[3])
-
-                betx.append(float(data[1]))
-                bety.append(float(data[2]))
-
-                # Do not forget to add the 2\\pi to the phase
-                mux.append(2.*np.pi*float(data[4]))
-                muy.append(2.*np.pi*float(data[5]))
+    # Read the original data
+    int_data = pd.read_parquet(path) 
    
-    # We create a dataframe for easy access to these values
-    df = pd.DataFrame({
-            'ELEMENT': names,
-            'BETX': betx,
-            'BETY': bety,
-            'MUX': mux,
-            'MUY': muy,
-        })
+    # Select only the desired rows
+    df = int_data[np.isin(int_data["NAME"], QPlist)]
 
     # Return given dataframe
     return df
@@ -185,23 +155,31 @@ def get_quadrupoles_lattice_functions(path, QPlist):
 
 if __name__ == '__main__':
     
-    print("Getting arcs sections...")
-    leftArc, rightArc, QUADRUPOLES_SELECTION = get_arc(IP)
+    print("\nPreparing system...")
+
+    leftArc, rightArc, QUADRUPOLES_SELECTION = cors_config["left_arc"], cors_config["right_arc"], cors_config["correction_quadrupoles"]
+
+    print(f"  -> Using arcs on s = ({leftArc[0]}, {leftArc[1]}) U ({rightArc[0]}, {rightArc[1]})")
+    print(f"  -> Correction quadrupoles = {QUADRUPOLES_SELECTION}")
     
-    print("Creating the system...")
+    print("\nCreating system...")
+
+    print("  -> Creating RHS of system of equations")
     # Initial guess for the errors
     ERR_init = np.zeros(len(QUADRUPOLES_SELECTION))
 
     # First, we get the right hand side vector of the system 
     RHS, delta0_x, delta0_y = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath)
 
-    print("Reading quadrupoles' params")
+    print("  -> Creating LHS of system of equations")
+    print("  \\__ Getting correction quadrupoles optical parameters")
+
     # In order to create the left hand side, we need to retreive the lattice functions of the quadrupoles of interest
     latticeDF = get_quadrupoles_lattice_functions(integrals_path, QUADRUPOLES_SELECTION)
 
     # We will now create simple lists of the lattice functions for easier access
-    BETX = latticeDF['BETX'].to_numpy()
-    BETY = latticeDF['BETY'].to_numpy()
+    BETX = latticeDF['IBX'].to_numpy()      # We're not using BETX/Y because we actually want the integrals of them
+    BETY = latticeDF['IBY'].to_numpy()
     MUX = latticeDF['MUX'].to_numpy()
     MUY = latticeDF['MUY'].to_numpy()
 
@@ -216,13 +194,14 @@ if __name__ == '__main__':
         # Return the residual
         return np.array([Sx, Cx, -Sy, -Cy]) - RHS
 
-    print("Solving the system")
+
+    print("\nSolving the system...")
+
     """ CALCULATE THE ERRORS STIMATIONS """
     ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-12).x
     
-
-    print("="*20 + "\nErrors estimation: \n")
-    print(QUADRUPOLES_SELECTION)
+    print("="*25)
+    print("\nErrors estimation: \n")
     print(ERR_estimations)
 
     print("\nWith a residue of: ", residual(ERR_estimations))

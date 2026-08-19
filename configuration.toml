@@ -36,7 +36,6 @@ direction = -1       		# Direction (1 for left to right, -1 the other way around
 radiate = false     		# Simulate syncrotron radiation
 
 
-
 # These options are usually set on the parameter's table
 # TODO: add these if they're even needed
 current = false         	# [Amps]
@@ -129,25 +128,29 @@ measure_twiss = true            # Twiss of the BPMs (or other measuring elements
 optics_twiss = true             # Twiss of the optics (quadrupoles)
 TBT_track = true                # Wether or not to track
 
-# Input options
-modifications_path = "inputs/IR_errors+corrections.madx"
+# Output options
+modifications_path = "inputs/IR_errors+corrections.madx"		# This is the file with errors+corrections
+corrections_path = "outputs/corrections/corrections.madx"		# This one is the file with only the corrections
 
 # Output options
 main_output_path = "outputs/corrections/"
-measure_path = "C_measurements_twiss.tfs"
-optics_path = "C_quads_twiss.tfs"
+measure_path = "C_measurements_twiss"
+optics_path = "C_quads_twiss"
 track_path = "C_track"
 APJ_path = "APJ/"
 
-save_tfs = true					# Select wether we'll save the .tfs file
+save_tfs = false					# Select wether we'll save the .tfs file
 
 # Plot options
-plot_APJ = false
+plot_APJ = true
 
 # Reference BPM and arcs for APJ calculation
 ref_bpm = "BPM_QD0AL.0"
 left_arc = [15000, 20000]
 right_arc = [23500, 30000]
+correction_quadrupoles = ["qd3l.0", "qf1cl.0", "qf1dr.1", "qd3r.1"]			# These have to be at least 2
+                          
+# APJ specific variables
 avermax_algorythm = 2022			# Which algorithm to use for avermax [2017, 2022]
-avermax_TH = 0.5               # Avermax \Psi treshold (in units of pi)
+avermax_TH = 0.5               			# Avermax \Psi treshold (in units of pi)
 
