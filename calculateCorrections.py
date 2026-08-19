@@ -8,7 +8,7 @@ import pandas as pd
 from scipy.optimize import least_squares
 
 # The math package for calculation
-from modules.matricial_system import createSystem_base2 as createSystem   # This is the left hand side of the equation
+from modules.APJ.matricial_system import createSystem_base2 as createSystem   # This is the left hand side of the equation
 
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
@@ -19,7 +19,7 @@ print("""
       \t\tC O R R E C T I O N S   C A L C U L A T I O N
       \t\t              version alpha                   
 
-      Using the APJ general formalism""")
+Using the APJ general formalism""")
 
 # ----------------------------
 # Parse config file arguments
@@ -38,7 +38,7 @@ with open("configuration.toml", "rb") as f:
     general_config = tomllib.load(f)
 
     lattice_config = general_config[f"LatticeFiles"]
-    system_config = general_config[f"{dic_key}System"]
+    system_config = general_config[f"ErrorsSystem"]         # In this case, we do not need to select different systems, only the error one
     beam_config = general_config[f"BeamParameters"]
     tracking_config = general_config[f"TrackParameters"]
 
@@ -146,11 +146,11 @@ def get_observed_system(mxp, myp, pxp, pyp):
     P0y, P1y = get_APJ_parameter(pyp, 'Y', leftArc, rightArc)
 
     def calculate_S_contribution(J0, J1, P0, P1):
-        """ Calculates the \sin(\psi_s) contribution according to the system of equations """
+        """ Calculates the \\sin(\\psi_s) contribution according to the system of equations """
         return np.sqrt(J1/J0)*np.cos(P1) - np.cos(P0)
 
     def calculate_C_contribution(J0, J1, P0, P1):
-        """ Calculates the \cos(\psi_s) contribution according to the system of equations """
+        """ Calculates the \\cos(\\psi_s) contribution according to the system of equations """
         return -np.sqrt(J1/J0)*np.sin(P1) + np.sin(P0)
     
     # We calculate the RHS constants
@@ -193,7 +193,7 @@ def get_quadrupoles_lattice_functions(path, QPlist):
                 betx.append(float(data[1]))
                 bety.append(float(data[2]))
 
-                # Do not forget to add the 2\pi to the phase
+                # Do not forget to add the 2\\pi to the phase
                 mux.append(2.*np.pi*float(data[4]))
                 muy.append(2.*np.pi*float(data[5]))
    
