@@ -117,7 +117,7 @@ STARTING AVERMAX TRAJECTORY CALCULATION USING 2017's ALGORYTHM
     if log:
         print(f"-> Used {count_x} X orbits from a total of {(count_x / len(Xs.columns))*100:.2f}% for the avermax trajectory")
         print(f"-> Used {count_y} Y orbits from a total of {(count_y / len(Xs.columns))*100:.2f}% for the avermax trajectory")
-        print(f"\nAVERMAX trajectory calculation finished.\n")
+        print(f"AVERMAX trajectory calculation finished.\n")
 
 
     return avermax_x, avermax_y
@@ -163,7 +163,7 @@ STARTING AVERMAX TRAJECTORY CALCULATION USING 2022's ALGORYTHM
         
     
     if log:
-        print(f"\nAVERMAX trajectory calculation finished.\n")
+        print(f"AVERMAX trajectory calculation finished.\n")
 
 
     return avermax_x, avermax_y

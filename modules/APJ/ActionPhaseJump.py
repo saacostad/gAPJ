@@ -10,6 +10,9 @@ def custom_warning(message, category, filename, lineno, file=None, line=None):
     print(f" -W- {filename.split('/')[-1]}{lineno} → {message}")
 
 warnings.showwarning = custom_warning
+
+
+
 # -----     CALCULATION USING THE 2009 FORMULAS
 def calculate_J(BETA, PSI, Z):
     """
@@ -72,16 +75,16 @@ def calculate_J_and_P(BETA, PSI, Z):
     # -- Shift arrays for pair (i, i+1)
 
     # Get the beta functions
-    beta_1 = np.sqrt(BETA[:-1])         
-    beta_2 = np.sqrt(BETA[1:])           
+    beta_1 = np.sqrt(np.roll(BETA, -1))         
+    beta_2 = np.sqrt(np.roll(BETA, 1))           
 
     # Get the reduces coordinates
-    z_1 = Z[:-1] / beta_1               # This is the z_red on the original code
-    z_2 = Z[1:] / beta_2
+    z_1 = np.roll(Z, -1) / beta_1               # This is the z_red on the original code
+    z_2 = np.roll(Z, 1) / beta_2
     
     # Get the phases
-    psi_1 = psi_rad[:-1]
-    psi_2 = psi_rad[1:]
+    psi_1 = np.roll(psi_rad, -1)
+    psi_2 = np.roll(psi_rad, 1)
     dpsi = psi_1 - psi_2
 
     # Avoid singularities 
@@ -98,6 +101,12 @@ def calculate_J_and_P(BETA, PSI, Z):
 
     # Phase will be atan2(-A, B)
     P = np.arctan2(-A, B)
+
+    # We'll make the first and last entries be equal to the second ones
+    J[0] = J[1]
+    J[-1] = J[-2]
+    P[0] = P[1]
+    P[-1] = P[-2]
 
     return J, P
     

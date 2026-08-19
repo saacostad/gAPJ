@@ -21,8 +21,8 @@ import tomllib                  # This is to parse the config file
 import argparse
 
 print("""
-\t\tA C T I O N   A N D   P H A S E   JUMP
-\t\tVersion alpha
+\tA C T I O N   A N D   P H A S E   J U M P
+\tVersion alpha
 """ )
 
 
@@ -59,7 +59,6 @@ system = parse(parsed_args)
 
 # Where to find the data to work with
 dic_key = 'Nominal' if system == 'N' else 'Errors' if system == 'E' else 'Corrections' if system == 'C' else 'Invalid'
-print("Parsing config file arguments...")
 
 system_config = None        # Configuration dict for special case use
 nominal_config = None        # Configuration dict for special case use
@@ -79,8 +78,8 @@ reference_bpm = system_config["ref_bpm"]      # The s_e from where we'll select 
 
 # Paths
 trackone_path = system_config["main_output_path"]+ "/" + system_config["track_path"] + ".parquet"     # The original trackone path
-twiss_path = nominal_config["main_output_path"] + "/" +  nominal_config["measure_path"] + ".parquet"             # The twiss files to use    
-save_path = system_config["main_output_path"] + "/" + system_config["APJ_path"] + ".parquet"                   # Where to save the APJ files
+twiss_path = nominal_config["main_output_path"] + "/" +  nominal_config["measure_path"] + ".parquet"  # The twiss files to use    
+save_path = system_config["main_output_path"] + "/" + system_config["APJ_path"]                       # Where to save the APJ files
 
 # The arcs of IP2 so we calculate the avermax traj
 arc =system_config["left_arc"] 
@@ -178,11 +177,9 @@ elif AVM_alg == 2022:
                                    log = True)
 
 
-
-
 # Guardamos otros datos importantes
-S = np.array(list(twiss_data["S"]))[1:]
-NAMES = list(twiss_data.index)[1:]
+S = np.array(list(twiss_data["S"]))
+NAMES = list(twiss_data.index)
 
 # S = np.array(list(twiss_data["S"]))
 # NAMES = list(twiss_data.index)

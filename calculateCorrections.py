@@ -38,17 +38,10 @@ with open("configuration.toml", "rb") as f:
     general_config = tomllib.load(f)
 
     lattice_config = general_config[f"LatticeFiles"]
-    system_config = general_config[f"ErrorsSystem"]         # In this case, we do not need to select different systems, only the error one
-    beam_config = general_config[f"BeamParameters"]
-    tracking_config = general_config[f"TrackParameters"]
+    errs_config = general_config[f"ErrorsSystem"]               # We need both systems: to know where the files are
+    cors_config = general_config[f"CorrectionsSystem"]          # And to then know where to output
 
-print(f"Read from LatticeFiles and {dic_key}System entry")
-
-
-
-
-# Working now with IP.2
-IP = 2
+print(f"Read from LatticeFiles, ErrorsSystem and CorrectionsSystem entries")
 
 # Path of the output files we'll be dealing with
 # TODO: by some strange reason, I coded J and delta to be MU and PHASE but now I'm too lazy to correct the names
@@ -60,33 +53,6 @@ PHASEYpath = out_path + "/VPhase.sdds"
 
 # Path of the integrals file from where to get the lattice functions
 integrals_path = "fcc_ee_test_simulation/integrals.dat"
-
-
-# Arcs regions to calculate previous and posterior APJ values
-# TODO: check the quadrupoles for IP 1 and 4
-def get_arc(IP):
-    leftArc = None 
-    rightArc = None 
-    QUADRUPOLES_SELECTION = None
-
-    if IP == 2:
-        leftArc = (15000, 20000)
-        rightArc = (23500, 30000)
-        QUADRUPOLES_SELECTION = ["QC4L.1", "QC3L.1", "QC0.2", "QC3.2"]
-    elif IP == 5 or IP == 3:
-        leftArc = (32000, 41900)
-        rightArc = (47000, 60000)
-        QUADRUPOLES_SELECTION = ["QC4L.2", "QC3L.2", "QC0.3", "QC3.3"]
-    elif IP == 7 or IP == 4:
-        leftArc = (60000, 66000)
-        rightArc = (69000, 80000)
-        QUADRUPOLES_SELECTION = ["QC4L.3", "QC3L.3", "QC0.4", "QC3.4"]
-    elif IP == 8 or IP == 1:
-        leftArc = (80000, 88000)
-        rightArc = (1000, 14000)
-        QUADRUPOLES_SELECTION = ["QC4L.1", "QC3L.1", "QC0.2", "QC3.2"]
-    
-    return leftArc, rightArc, QUADRUPOLES_SELECTION
 
 
 # We'll create a function to calculate the APJ parameters easily
