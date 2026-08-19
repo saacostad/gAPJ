@@ -92,9 +92,9 @@ save_tfs = true						# Select wether we'll save the .tfs file
 [ErrorsSystem]
 
 # Which twiss files to create for the nominal lattice
-measure_twiss = 0            # Twiss of the BPMs (or other measuring elements)
-optics_twiss = 0             # Twiss of the optics (quadrupoles)
-TBT_track = true                # Wether or not to track
+measure_twiss = 1            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = 1             # Twiss of the optics (quadrupoles)
+TBT_track = 1                # Wether or not to track
 
 # Input options (where the erros/corrections will be)
 modifications_path = "inputs/IR_errors.madx"
@@ -124,8 +124,8 @@ avermax_TH = 0.2               			# Avermax \Psi treshold (in units of pi)		(use
 [CorrectionsSystem]
 
 # Which twiss files to create for the nominal lattice
-measure_twiss = true            # Twiss of the BPMs (or other measuring elements)
-optics_twiss = true             # Twiss of the optics (quadrupoles)
+measure_twiss = 1            # Twiss of the BPMs (or other measuring elements)
+optics_twiss = 1             # Twiss of the optics (quadrupoles)
 TBT_track = true                # Wether or not to track
 
 # Output options
@@ -133,7 +133,7 @@ modifications_path = "inputs/IR_errors+corrections.madx"		# This is the file wit
 corrections_path = "outputs/corrections/corrections.madx"		# This one is the file with only the corrections
 
 # Output options
-main_output_path = "outputs/corrections/"
+main_output_path = "outputs/corrections"
 measure_path = "C_measurements_twiss"
 optics_path = "C_quads_twiss"
 track_path = "C_track"

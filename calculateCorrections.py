@@ -142,6 +142,9 @@ def get_quadrupoles_lattice_functions(path, QPlist):
     # Select only the desired rows
     df = int_data[np.isin(int_data["NAME"], QPlist)]
 
+    df["MUX"] *= 2.*np.pi
+    df["MUY"] *= 2.*np.pi
+
     # Return given dataframe
     return df
 
@@ -202,39 +205,45 @@ if __name__ == '__main__':
     
     print("="*25)
     print("\nErrors estimation: \n")
-    print(ERR_estimations)
-
-    print("\nWith a residue of: ", residual(ERR_estimations))
-
+    
+    for i in range(len(ERR_estimations)):
+        print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g} \t\t residue of {residual(ERR_estimations)[i]:.2g}")
 
     # Write to the file
     # Build lookup dictionary
     err_dict = dict(zip(QUADRUPOLES_SELECTION, ERR_estimations))
+    
+    print(f"\n  -> Writting errors + corrections to {cors_config["modifications_path"]}")
 
     # Read and modify file
-    with open("IR_errors+corrections.madx", "r") as f:
+    with open(cors_config["modifications_path"], "r") as f:
         lines = f.readlines()
 
     new_lines = []
 
     for line in lines:
         # Get the quadrupole name
-        # TODO: this only works when I add errors, as if there are none, the -> will never appear
-        quad_name = line.split("->")[0].strip()
+        quad_name = line.split("\t")[0]
 
         if quad_name in err_dict:
+
+            # Get the correction, original value and new value
             err = err_dict[quad_name]
+            or_val = float(line.split("\t")[1])
+            new_val = err + or_val
+                
+            print(f"  \\__ {quad_name}: {or_val:.3g} + {err:.2g} = {new_val:.3g}")
 
             # Remove trailing semicolon/newline, append new term, add semicolon back
-            if err < 0:
-                line = line.rstrip(";\n") + f"-{abs(err)};\n"
-            else:
-                line = line.rstrip(";\n") + f"+{abs(err)};\n"
+            parts = line.strip().split("\t")    # Get the cols of the file
+            parts[1] = str(new_val)
+            line = "\t".join(parts) 
+            line = line + "\n"
 
         new_lines.append(line)
 
     # Write back
-    with open("IR_errors+corrections.madx", "w") as f:
+    with open(cors_config["modifications_path"], "w") as f:
         f.writelines(new_lines)
 
 

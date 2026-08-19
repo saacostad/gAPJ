@@ -54,7 +54,7 @@ def calculate_integrals(twiss, beam_params):
     # And here I'll make the calculation to populate it
     for row in twiss.itertuples():
         betax_func = get_beta_function(sign, row.K1**2, row.BETX, row.ALFX)
-        betay_func = get_beta_function(sign, row.K1**2, row.BETY, row.ALFY)
+        betay_func = get_beta_function(-sign, row.K1**2, row.BETY, row.ALFY)
 
         integralx = quad(betax_func, 0, row.L)[0]
         integraly = quad(betay_func, 0, row.L)[0]
