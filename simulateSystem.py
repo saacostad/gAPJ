@@ -36,7 +36,7 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
                     debug, errors_path = None, 
                     track_flag = False, tracking_config = None,
                     make_integrals = False, _save_tfs = False, _integrals_path = False):
-
+    
     # -- Create a mad-x connection
     # Read beam parameters
     
@@ -110,7 +110,9 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         # HACK: We only want certain twiss parameters, not all the table
         
         # Tell which elements to keep
-        selected_names = [name for name in element_names if line[name].__class__.__name__ in measure_class]
+        selected_names = [name for name in element_names if 
+                          line[name].__class__.__name__.lower() in measure_class or             # To match classes
+                          any(pattern in name for pattern in measure_class)]                    # To match names
 
         # Perform the twiss
         print(f"  -> Performing twiss calculation.")
@@ -137,7 +139,10 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         print(f"\nCreating twiss for optics elements...")
         # -- CREATE QUADRUPOLE STRENGTHS AND LENGTHS PATHS
         # Tell which elements to keep
-        selected_names = [name for name in element_names if line[name].__class__.__name__ in optics_class or name.lower().startswith("ip") ]
+        selected_names = [name for name in element_names if 
+                          line[name].__class__.__name__.lower() in optics_class or          # Match class
+                          name.lower().startswith("ip") or                                  # Match IP (which is useful)
+                          any(pattern in name for pattern in optics_class)]                 # Match name pattern
                                                                                                             # TODO: maybe would be good if I generalized this
 
         # Perform the twiss
@@ -382,12 +387,15 @@ parameters_path = input_main_path + lattice_config["params_path"]   # Parameters
 
 # -- Definitions quads strengths and lengths
 sequence_name = lattice_config["sequence_name"]             # The name of the sequence
-measure_class = lattice_config["measure_class"]             # Which elements will be used as measurement points
-optics_class = lattice_config["optics_class"]               # Which elements will be used as measurement points
+measure_class_temp = lattice_config["measure_class"]             # Which elements will be used as measurement points
+optics_class_temp = lattice_config["optics_class"]               # Which elements will be used as measurement points
 twiss_parameters = lattice_config["measure_parameters"]     # What parameters we want to save from the twiss file
 quad_parameters = lattice_config["optics_parameters"]       # What parameters we need for the quads (optics + integrals)
 debug = lattice_config["debug"]                             # Debug flag
 
+# Make the lists go lower
+measure_class = [thing.lower() for thing in measure_class_temp]
+optics_class = [thing.lower() for thing in optics_class_temp]
 
 # -- Beam parameters
 beam_parameters = dict()
