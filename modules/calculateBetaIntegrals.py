@@ -10,7 +10,7 @@ from scipy.integrate import quad     # To integarte
 
 
 
-def get_beta_function(sign, KK, beta0, alfa0):
+def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
     """ This function returns a ready-to-use function representing beta(s) inside of a quadrupole.
     It takes the sign (direction of the beam * plane * charge of the particle, either -1 or 1 depending on the convention used),
     the element's magnetic gradient K and entrance beta_0 and alfa_0 """
@@ -19,8 +19,8 @@ def get_beta_function(sign, KK, beta0, alfa0):
     if KK == 0.0:
         return lambda x: 0.0
 
-    K = np.sqrt(KK)             # Helper variable
-    case = np.sign(sign * KK)   # Get if we're focusing or defocusing
+    K = np.sqrt(abs(KK))         # Helper variable
+    case = np.sign(_sign * sign_K)   # Get if we're focusing or defocusing
     
     # Focusing case 
     if case > 0:
@@ -53,8 +53,9 @@ def calculate_integrals(twiss, beam_params):
 
     # And here I'll make the calculation to populate it
     for row in twiss.itertuples():
-        betax_func = get_beta_function(sign, row.K1**2, row.BETX, row.ALFX)
-        betay_func = get_beta_function(-sign, row.K1**2, row.BETY, row.ALFY)
+        # TODO: I was passing K^2 but maybe it is actually K
+        betax_func = get_beta_function(sign, np.sign(row.K1), row.K1**2, row.BETX, row.ALFX)
+        betay_func = get_beta_function(-sign, np.sign(row.K1), row.K1**2, row.BETY, row.ALFY)
 
         integralx = quad(betax_func, 0, row.L)[0]
         integraly = quad(betay_func, 0, row.L)[0]
@@ -68,6 +69,7 @@ def calculate_integrals(twiss, beam_params):
             "MUY": row.MUY,
             "IBX": integralx,
             "IBY": integraly,
+            "L": row.L
             })
 
     # Lastly, we create the dataframe

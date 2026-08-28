@@ -209,19 +209,23 @@ print("""
 if plot:
     print("\n--> Plotting APJ variables\n")
     plt.plot(S, Jx)
-    plt.title("Jx")
+    plt.title(f"Jx {dic_key}")
+    plt.grid()
     plt.show()
 
     plt.plot(S, Jy)
-    plt.title("Jy")
+    plt.title(f"Jy {dic_key}")
+    plt.grid()
     plt.show()
 
     plt.plot(S, deltax)
-    plt.title("deltax")
+    plt.title(f"dx {dic_key}")
+    plt.grid()
     plt.show()
 
     plt.plot(S, deltay)
-    plt.title("deltay")
+    plt.title(f"dy {dic_key}")
+    plt.grid()
     plt.show()
 
 

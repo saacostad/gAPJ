@@ -185,7 +185,8 @@ if __name__ == '__main__':
     BETY = latticeDF['IBY'].to_numpy()
     MUX = latticeDF['MUX'].to_numpy()
     MUY = latticeDF['MUY'].to_numpy()
-
+    L = latticeDF['L'].to_numpy()
+    
 
     # We'll create the residual function to use with Least_Squares()
     def residual(K):
@@ -195,13 +196,14 @@ if __name__ == '__main__':
         Sy, Cy = createSystem(K, BETY, MUY, delta0_y, axis = 'Y')
         
         # Return the residual
-        return np.array([Sx, Cx, -Sy, -Cy]) - RHS
+        return np.array([Sx, Cx, Sy, Cy]) - RHS
 
 
     print("\nSolving the system...")
 
     """ CALCULATE THE ERRORS STIMATIONS """
-    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-12).x
+    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-16).x
+
     
     print("="*25)
     print("\nErrors estimation: \n")
@@ -230,7 +232,7 @@ if __name__ == '__main__':
             # Get the correction, original value and new value
             err = err_dict[quad_name]
             or_val = float(line.split("\t")[1])
-            new_val = err + or_val
+            new_val = -err + or_val
                 
             print(f"  \\__ {quad_name}: {or_val:.3g} + {err:.2g} = {new_val:.3g}")
 

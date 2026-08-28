@@ -108,6 +108,7 @@ def calculate_J_and_P(BETA, PSI, Z):
     P[0] = P[1]
     P[-1] = P[-2]
 
+
     return J, P
     
 
