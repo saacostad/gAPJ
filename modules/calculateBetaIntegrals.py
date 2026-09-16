@@ -21,7 +21,6 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
 
     K = np.sqrt(abs(KK))         # Helper variable
     case = np.sign(_sign * sign_K)   # Get if we're focusing or defocusing
-    
     # Focusing case 
     if case > 0:
 
@@ -36,9 +35,9 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
         # Defocusin case: change sin/cos for sinh/cosh
         def beta(s):
             ks = K*s 
-            sin = np.sinh(ks)
-            cos = np.cosh(ks)
-            return beta0*cos**2 + 2.*alfa0*(sin*cos/K) + ((1.+alfa0**2)/beta0)*(sin**2)/KK
+            sinh = np.sinh(ks)
+            cosh = np.cosh(ks)
+            return beta0*cosh**2 + 2.*alfa0*(sinh*cosh/K) + ((1.+alfa0**2)/beta0)*(sinh**2)/KK
         return beta
 
 
@@ -47,15 +46,18 @@ def calculate_integrals(twiss, beam_params):
     
     # First, we calculate the general sign
     sign = np.sign(beam_params["dir"] * beam_params["charge"])      # TODO: check this bitch because I've got no clue if I gotta add a - or not
-    
     # Here I will create the new pandas dataframe 
     results = list()
 
     # And here I'll make the calculation to populate it
     for row in twiss.itertuples():
+
+
+
+
         # TODO: I was passing K^2 but maybe it is actually K
-        betax_func = get_beta_function(sign, np.sign(row.K1), row.K1**2, row.BETX, row.ALFX)
-        betay_func = get_beta_function(-sign, np.sign(row.K1), row.K1**2, row.BETY, row.ALFY)
+        betax_func = get_beta_function(sign, np.sign(row.K1), np.abs(row.K1), row.BETX, row.ALFX)
+        betay_func = get_beta_function(-sign, np.sign(row.K1), np.abs(row.K1), row.BETY, row.ALFY)
 
         integralx = quad(betax_func, 0, row.L)[0]
         integraly = quad(betay_func, 0, row.L)[0]
@@ -71,6 +73,16 @@ def calculate_integrals(twiss, beam_params):
             "IBY": integraly,
             "L": row.L
             })
+
+        if row.NAME in ["mqxa.3l1", "mqxb.b2l1", "mqxb.a2l1", "mqxa.1l1", "mqxa.1r1", "mqxb.a2r1"]:
+            print("")
+            print("QP: ", row.NAME)
+            print("k - ", row.K1)
+            print("l - ", row.L)
+            print("betax - ", row.BETX)
+            print("betay - ", row.BETY)
+            print("INT BETX = ", integralx)
+            print("INT BETY = ", integraly)
 
     # Lastly, we create the dataframe
     integrals_dataframe = pd.DataFrame(results)
