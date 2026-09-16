@@ -95,8 +95,7 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
             line[nn].voltage = 0
         twiss_method = "4d"
 
-        s_start = tab.s[:-1]
-        s_end   = tab.s[1:]
+        s_end   = np.roll(tab.s, -1)
         s_center = s_end
 
 
@@ -153,10 +152,11 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         print(f"  -> Performing twiss calculation.")
 
 
+
         # MÉTODO PROFE
         twiss_t = line.twiss(method = twiss_method, at_s=s_center)
         twiss = pd.DataFrame({
-            'NAME': tab.name[:-1],
+            'NAME': tab.name,
             'S': s_center,
             'BETX': twiss_t.betx,
             'BETY': twiss_t.bety,
@@ -165,16 +165,15 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
             'ALFX': twiss_t.alfx,
             'ALFY': twiss_t.alfy
         })
-        pandas_data = twiss
+        elem_mask = np.isin(twiss["NAME"], selected_names)
+        pandas_data = twiss[elem_mask]
 
    
-
-
         # MÉTODO YO
         # twiss = line.twiss(method = twiss_method)
         #
         # # Filter the columns
-        # # elem_mask = np.isin(twiss.name, selected_names)
+        # elem_mask = np.isin(twiss.name, selected_names)
         # filtered_twiss = twiss.rows[elem_mask].cols[quad_parameters]
         #
         # # Create pandas data for easy write and all that
