@@ -28,7 +28,7 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
             ks = K*s 
             sin = np.sin(ks)
             cos = np.cos(ks)
-            return beta0*cos**2 + 2.*alfa0*(sin*cos/K) + ((1.+alfa0**2)/beta0)*(sin**2)/KK
+            return beta0*cos**2 - 2.*alfa0*(sin*cos/K) + ((1.+alfa0**2)/beta0)*(sin**2)/KK
         return beta
 
     else: 
@@ -37,7 +37,7 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
             ks = K*s 
             sinh = np.sinh(ks)
             cosh = np.cosh(ks)
-            return beta0*cosh**2 + 2.*alfa0*(sinh*cosh/K) + ((1.+alfa0**2)/beta0)*(sinh**2)/KK
+            return beta0*cosh**2 - 2.*alfa0*(sinh*cosh/K) + ((1.+alfa0**2)/beta0)*(sinh**2)/KK
         return beta
 
 
@@ -74,15 +74,16 @@ def calculate_integrals(twiss, beam_params):
             "L": row.L
             })
 
-        if row.NAME in ["mqxa.3l1", "mqxb.b2l1", "mqxb.a2l1", "mqxa.1l1", "mqxa.1r1", "mqxb.a2r1"]:
-            print("")
-            print("QP: ", row.NAME)
-            print("k - ", row.K1)
-            print("l - ", row.L)
-            print("betax - ", row.BETX)
-            print("betay - ", row.BETY)
-            print("INT BETX = ", integralx)
-            print("INT BETY = ", integraly)
+        # TODO: debug
+        # if row.NAME in ["mqxa.3l1", "mqxb.b2l1", "mqxb.a2l1", "mqxa.1l1", "mqxa.1r1", "mqxb.a2r1"]:
+        #     print("")
+        #     print("QP: ", row.NAME)
+        #     print("k - ", row.K1)
+        #     print("l - ", row.L)
+        #     print("betax - ", row.BETX)
+        #     print("betay - ", row.BETY)
+        #     print("INT BETX = ", integralx)
+        #     print("INT BETY = ", integraly)
 
     # Lastly, we create the dataframe
     integrals_dataframe = pd.DataFrame(results)

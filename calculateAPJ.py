@@ -199,6 +199,13 @@ save_APJ_var(0, S, NAMES, deltax, "HPhase.sdds")
 save_APJ_var(1, S, NAMES, deltay, "VPhase.sdds")
 save_APJ_var(1, S, NAMES, Jy, "VAction.sdds")
 
+# TODO: make this avermax saving be done only if user wants it 
+names = twiss_data.index
+s = twiss_data["S"]
+avermax_data = pd.DataFrame({"NAME": names, "S": s, "X": avermax_x, "Y": avermax_y})
+
+tfs.write(f"{save_path}avermax.tfs", avermax_data)
+
 
 print(""" 
 \t\tF i n i s h e d   A P J   c a l c u l a t i o n

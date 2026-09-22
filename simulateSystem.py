@@ -154,30 +154,30 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
 
 
         # MÉTODO PROFE
-        twiss_t = line.twiss(method = twiss_method, at_s=s_center)
-        twiss = pd.DataFrame({
-            'NAME': tab.name,
-            'S': s_center,
-            'BETX': twiss_t.betx,
-            'BETY': twiss_t.bety,
-            'MUX': twiss_t.mux,
-            'MUY': twiss_t.muy,
-            'ALFX': twiss_t.alfx,
-            'ALFY': twiss_t.alfy
-        })
-        elem_mask = np.isin(twiss["NAME"], selected_names)
-        pandas_data = twiss[elem_mask]
+        # twiss_t = line.twiss(method = twiss_method, at_s=s_center)
+        # twiss = pd.DataFrame({
+        #     'NAME': tab.name,
+        #     'S': s_center,
+        #     'BETX': twiss_t.betx,
+        #     'BETY': twiss_t.bety,
+        #     'MUX': twiss_t.mux,
+        #     'MUY': twiss_t.muy,
+        #     'ALFX': twiss_t.alfx,
+        #     'ALFY': twiss_t.alfy
+        # })
+        # elem_mask = np.isin(twiss["NAME"], selected_names)
+        # pandas_data = twiss[elem_mask]
 
    
         # MÉTODO YO
-        # twiss = line.twiss(method = twiss_method)
-        #
-        # # Filter the columns
-        # elem_mask = np.isin(twiss.name, selected_names)
-        # filtered_twiss = twiss.rows[elem_mask].cols[quad_parameters]
-        #
-        # # Create pandas data for easy write and all that
-        # pandas_data = filtered_twiss.to_pandas()
+        twiss = line.twiss(method = twiss_method)
+
+        # Filter the columns
+        elem_mask = np.isin(twiss.name, selected_names)
+        filtered_twiss = twiss.rows[elem_mask].cols[quad_parameters]
+
+        # Create pandas data for easy write and all that
+        pandas_data = filtered_twiss.to_pandas()
 
 
 

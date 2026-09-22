@@ -100,7 +100,7 @@ def get_APJ_parameter(path, axis, left_arc, right_arc):
 
 def get_observed_system(mxp, myp, pxp, pyp):
     """ Given the 4 APJ .sdds paths, this function gets the values of each one of the APJ variables and,
-    according to Santiago's theory, creates the right hand side vector to be solved by the system of equations 
+    according to the theory, creates the right hand side vector to be solved by the system of equations 
 
     OUTPUT: np.array with the constants of RHS  |   value of delta_0x   |   value of delta_0y"""
 
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     RHS, delta0_x, delta0_y = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath)
 
     print("  -> Creating LHS of system of equations")
-    print("  \\__ Getting correction quadrupoles optical parameters")
+    print(f"  \\__ Getting correction quadrupoles optical parameters from {integrals_path}")
 
     # In order to create the left hand side, we need to retreive the lattice functions of the quadrupoles of interest
     latticeDF = get_quadrupoles_lattice_functions(integrals_path, QUADRUPOLES_SELECTION)
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     print("\nSolving the system...")
 
     """ CALCULATE THE ERRORS STIMATIONS """
-    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-16).x
+    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-15).x
 
     
     print("="*25)

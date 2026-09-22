@@ -110,8 +110,8 @@ STARTING AVERMAX TRAJECTORY CALCULATION USING 2017's ALGORYTHM
             count_y += 1
     
     # Lastly, we get the mean of the turns and multiply by 1000
-    avermax_x = np.mean(np.array(x_turns), axis = 0)
-    avermax_y = np.mean(np.array(y_turns), axis = 0)
+    avermax_x = np.mean(np.array(x_turns), axis = 0) * 1000.0
+    avermax_y = np.mean(np.array(y_turns), axis = 0) * 1000.0
         
     
     if log:
@@ -158,8 +158,8 @@ STARTING AVERMAX TRAJECTORY CALCULATION USING 2022's ALGORYTHM
 
 
     # Lastly, we get the mean of the turns and multiply by 1000
-    avermax_x = np.mean(np.array(x_turns), axis = 0)
-    avermax_y = np.mean(np.array(y_turns), axis = 0)
+    avermax_x = np.mean(np.array(x_turns), axis = 0)*1e3
+    avermax_y = np.mean(np.array(y_turns), axis = 0)*1e3
         
     
     if log:
