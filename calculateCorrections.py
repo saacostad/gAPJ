@@ -190,13 +190,12 @@ if __name__ == '__main__':
 
     # We'll create the residual function to use with Least_Squares()
     def residual(K):
-
         # We create the constants for both axis
         Sx, Cx = createSystem(K, BETX, MUX, delta0_x, axis = 'X')
         Sy, Cy = createSystem(K, BETY, MUY, delta0_y, axis = 'Y')
         
         # Return the residual
-        return np.array([Sx, Cx, Sy, Cy]) - RHS
+        return np.array([Sx, Cx, -Sy, -Cy]) - RHS
 
 
     print("\nSolving the system...")
@@ -232,7 +231,7 @@ if __name__ == '__main__':
             # Get the correction, original value and new value
             err = err_dict[quad_name]
             or_val = float(line.split("\t")[1])
-            new_val = -err + or_val
+            new_val = err + or_val
                 
             print(f"  \\__ {quad_name}: {or_val:.3g} + {err:.2g} = {new_val:.3g}")
 
