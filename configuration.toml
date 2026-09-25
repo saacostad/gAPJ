@@ -112,8 +112,8 @@ plot_APJ = 1
 
 # Reference BPM and arcs for APJ calculation
 ref_bpm = "BPMSW.1L1.B1"
-left_arc = [20000, 22800]
-right_arc = [24000, 26500]
+left_arc = [14000, 16000]
+right_arc = [18000, 20000]
 avermax_algorythm = 2022			# Which algorithm to use for avermax [2017, 2022]
 avermax_TH = 0.2               			# Avermax \Psi treshold (in units of pi)		(used for the 2017 avermax algorithm)
 
@@ -145,8 +145,8 @@ plot_APJ = 1
 
 # Reference BPM and arcs for APJ calculation
 ref_bpm = "BPMSW.1L1.B1"
-left_arc = [20000, 22800]
-right_arc = [24000, 26500]
+left_arc = [14000, 16000]
+right_arc = [18000, 20000]
 correction_quadrupoles = ["mqxa.3l1", "mqxb.b2l1", "mqxb.a2r1", "mqxa.3r1"]			# These have to be at least 2
                           
 # APJ specific variables
