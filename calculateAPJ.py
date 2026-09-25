@@ -14,11 +14,12 @@ import matplotlib.pyplot as plt
 # self-made modules
 from modules.APJ.ActionPhaseJump import calculate_APJ   
 from modules.APJ.orbit_tools import avermax_2017, avermax_2022
-from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
+from modules.data_tools.simulateSystem_parser import create_parser, parse_system, parse_commands  # To parse the code's parameters
 
 # Parceros
 import tomllib                  # This is to parse the config file
 import argparse
+from pathlib import Path
 
 print("""
 \tA C T I O N   A N D   P H A S E   J U M P
@@ -52,10 +53,10 @@ def save_APJ_var(plane, s, NAMES, var, name):
 print("Parsing system...")
 
 parser = argparse.ArgumentParser()
-create_parser_args(parser)
+create_parser(parser)
 parsed_args = parser.parse_args()
 
-system = parse(parsed_args)
+system = parse_system(parsed_args)
 
 # Where to find the data to work with
 dic_key = 'Nominal' if system == 'N' else 'Errors' if system == 'E' else 'Corrections' if system == 'C' else 'Invalid'
@@ -91,6 +92,29 @@ plot = system_config["plot_APJ"]
 _treshold = system_config["avermax_TH"]      # Treshold to use for avermax calc
 
 AVM_alg = system_config["avermax_algorythm"]
+
+
+
+# ----------------------
+# Command line parsing
+# ----------------------
+arg = parsed_args   # An alias just so I can write this faster
+
+# Parse the command line if needed
+if not arg.use_config:
+    print("--> Parsing command line arguments")
+    
+    reference_bpm = arg.ref_bpm if arg.ref_bpm else reference_bpm
+    trackone_path = arg.trackone_path if arg.trackone_path else trackone_path
+    twiss_path = arg.twiss_path if arg.twiss_path else twiss_path
+    save_path = arg.main_output_path if arg.main_output_path else save_path
+    arc[0] = arg.left_arc_start if arg.left_arc_start else arc[0]
+    arc[1] = arg.left_arc_end if arg.left_arc_end else arc[1]
+    rightArc[0] = arg.right_arc_start if arg.right_arc_start else rightArc[0]
+    rightArc[1] = arg.right_arc_end if arg.right_arc_end else rightArc[1]
+
+
+    
 
 # --------------------------------
 #       LECTURA DEL TRACKONE
@@ -194,7 +218,7 @@ Jx, Jy, deltax, deltay  = calculate_APJ(twiss_data, avermax_x, avermax_y, last_A
 
 
 print(f"-> Saving APJ files in {save_path}...")
-
+Path(f"{save_path}").mkdir(parents=True, exist_ok=True) # Create the required folders if needed
 save_APJ_var(0, S, NAMES, Jx, "HAction.sdds")
 save_APJ_var(0, S, NAMES, deltax, "HPhase.sdds")
 save_APJ_var(1, S, NAMES, deltay, "VPhase.sdds")
