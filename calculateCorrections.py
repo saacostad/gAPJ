@@ -13,7 +13,7 @@ from modules.APJ.matricial_system import createSystem_base2 as createSystem   # 
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
 import tomllib                  # This is to parse the config file
-from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
+from modules.data_tools.simulateSystem_parser import create_parser, parse_system, parse_commands  # To parse the code's parameters
 
 print("""
       \t\tC O R R E C T I O N S   C A L C U L A T I O N
@@ -28,7 +28,7 @@ Using the APJ general formalism""")
 print("Parsing system...")
 
 parser = argparse.ArgumentParser()
-create_parser_args(parser)
+create_parser(parser)
 parsed_args = parser.parse_args()
 
 lattice_config = None       # Configuration dict for general use
@@ -49,17 +49,27 @@ with open(parsed_args.config_file, "rb") as f:
 
 print(f"Read from LatticeFiles, ErrorsSystem and CorrectionsSystem entries")
 
+# For the command line parsing
+arg = parsed_args
 
 # Path of the output files we'll be dealing with
-# TODO: by some strange reason, I coded J and delta to be MU and PHASE but now I'm too lazy to correct the names
-out_path = errs_config["main_output_path"] + "/APJ"
+out_path = errs_config["main_output_path"] + "/APJ" if not arg.sequence_path else arg.sequence_path
 MUXpath = out_path + "/HAction.sdds"
 MUYpath = out_path + "/VAction.sdds"
 PHASEXpath = out_path + "/HPhase.sdds"
 PHASEYpath = out_path + "/VPhase.sdds"
 
 # Path of the integrals file from where to get the lattice functions
-integrals_path = nomi_config["main_output_path"] + "/" + nomi_config["integrals_path"] + ".parquet"
+nomi_out_path = nomi_config["main_output_path"] if not arg.twiss_path else arg.twiss_path
+integrals_path = nomi_out_path + "/" + nomi_config["integrals_path"] + ".parquet"
+
+# Correction settings
+cors_config["left_arc"][0] = arg.left_arc_start if arg.left_arc_start else cors_config["left_arc"][0] 
+cors_config["left_arc"][1] = arg.left_arc_end if arg.left_arc_end else cors_config["left_arc"][1] 
+cors_config["right_arc"][0] = arg.right_arc_start if arg.right_arc_start else cors_config["right_arc"][0] 
+cors_config["right_arc"][1] = arg.right_arc_end if arg.right_arc_end else cors_config["right_arc"][1]
+cors_config["modifications_path"] = arg.modifications_path if arg.modifications_path  else cors_config["modifications_path"]
+
 
 # We'll create a function to calculate the APJ parameters easily
 def get_APJ_parameter(path, axis, left_arc, right_arc):

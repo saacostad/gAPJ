@@ -18,8 +18,8 @@ def create_parser(parser):
         help="""Which system to handle: nominal, errors or corrections. 
         1. Nominal (nom) will only perform the respective twiss for the nominal lattice elements. 
         2. Errors (err) and corrections (corr) will perform the twiss* and the particle tracking""",
-        required=True,
-        dest="system"
+        dest="system",
+        default = "Invalid"
     )
 
     # -- Choose the configuration file
