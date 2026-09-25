@@ -8,6 +8,10 @@ import argparse                 # Will be used mainly to select if we're creatin
 def create_parser(parser):
     """ In this function we create the needed command line parsing args """
 
+    # --------------------------------
+    #  General command line parsing
+    # --------------------------------
+
     # -- Choose which system to simulate
     parser.add_argument(
         "-s", "--system",
@@ -34,6 +38,17 @@ def create_parser(parser):
             dest = "use_config",
             action = 'store_true'
     )
+
+
+
+
+
+    # --------------------------------
+    #  Specific command line parsing
+    # --------------------------------
+    
+    # ----------------------
+    # For system simulation
 
     # -- Choose the input sequence file
     parser.add_argument(
@@ -84,6 +99,10 @@ def create_parser(parser):
         help = "Number of turns to simulate",
         dest = "turns"
     )
+
+
+    # ---------------------
+    # For APJ calculation
 
     # -- Reference for avermax BPM
     parser.add_argument(

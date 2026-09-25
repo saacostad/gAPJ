@@ -11,6 +11,7 @@ import pandas as pd
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
 import tomllib                  # This is to parse the config file
+from pathlib import Path
 
 # Libraries for xsuite and pa calculations
 from xobjects import Method
@@ -130,11 +131,13 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         pandas_data.columns = pandas_data.columns.str.upper()
         
         print(f"  -> Saving twiss file to {main_path}/{twiss_path}.parquet")
+        Path(f"{main_path}/{twiss_path}.parquet").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
         pandas_data.to_parquet(f"{main_path}/{twiss_path}.parquet", engine="pyarrow")       # Save dataframe in this format to read faster
 
         # Save to tfs if needed
         if _save_tfs:
             print(f"  \\__ Saving twiss file to {main_path}/tfs/{twiss_path}.tfs")
+            Path(f"{main_path}/tfs/{twiss_path}.tfs").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
             filtered_twiss.to_tfs(f"{main_path}/tfs/{twiss_path}.tfs")
 
 
@@ -146,7 +149,6 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
                           line[name].__class__.__name__.lower() in optics_class or          # Match class
                           name.lower().startswith("ip") or                                  # Match IP (which is useful)
                           any(pattern in name for pattern in optics_class)]                 # Match name pattern
-                                                                                                            # TODO: maybe would be good if I generalized this
 
         # Perform the twiss
         print(f"  -> Performing twiss calculation.")
@@ -197,22 +199,26 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
             
             # We save the dataframe
             print(f"  \\__ Saving integrals data to {main_path}/{integrals_path}.parquet")
+            Path(f"{main_path}/{integrals_path}.parquet").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
             integrals_data.to_parquet(f"{main_path}/{integrals_path}.parquet", engine="pyarrow")
             
             # Also save the tfs
             if _save_tfs:
                 print(f"  \\__ Saving integrals data to {main_path}/tfs/{integrals_path}.tfs")
+                Path(f"{main_path}/tfs/{integrals_path}.tfs").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
                 tfs.write(f"{main_path}/tfs/{integrals_path}.tfs", integrals_data)
             
 
 
         print(f"  -> Saving twiss file to {main_path}/{quadrupoles_path}.parquet")
+        Path(f"{main_path}/{quadrupoles_path}.parquet").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
         pandas_data.to_parquet(f"{main_path}/{quadrupoles_path}.parquet", engine="pyarrow")       # Save dataframe in this format to read faster
 
         
         # Save to tfs if needed
         if _save_tfs:
             print(f"  \\__ Saving twiss file to {main_path}/tfs/{quadrupoles_path}.tfs")
+            Path(f"{main_path}/tfs/{quadrupoles_path}.tfs").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
             filtered_twiss.to_tfs(f"{main_path}/tfs/{quadrupoles_path}"+".tfs")       
 
 
@@ -325,11 +331,13 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
     
         # Here we save the data
         print(f"  \\__ Saving trackone file to {main_path}/{track_path}.parquet")
+        Path(f"{main_path}/{track_path}.parquet").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
         trackone.to_parquet(f"{main_path}/{track_path}.parquet", engine="pyarrow")
         
         # Save it to tfs 
         if _save_tfs:
             print(f"  \\__ Saving trackone file to {main_path}/tfs/{track_path}.tfs")
+            Path(f"{main_path}/tfs/{track_path}.tfs").parent.mkdir(parents=True, exist_ok=True) # Create the required folders if needed
             tfs.write(f"{main_path}/tfs/{track_path}.tfs", trackone)
 
 
@@ -362,6 +370,9 @@ system = parse_system(parsed_args)
 # Where to find the data to work with
 dic_key = 'Nominal' if system == 'N' else 'Errors' if system == 'E' else 'Corrections' if system == 'C' else 'Invalid'
 
+print(f"Read from LatticeFiles and {dic_key}System entry")
+
+
 # ----------------------------
 # Parse config file arguments
 # ----------------------------
@@ -386,10 +397,11 @@ with open(parsed_args.config_file, "rb") as f:
 
 # -- General options: where are the lattices, what elements to get, etc...
 
-# -- Paths to lattice files 
+# -- Paths to lattice files and output paths
 input_main_path = lattice_config["main_input_path"]
 sequence_path = input_main_path + lattice_config["sequence_path"]   # Where the sequence is located
 
+main_out = system_config["main_output_path"]
 
 # -- Definitions quads strengths and lengths
 sequence_name = lattice_config["sequence_name"]             # The name of the sequence
@@ -415,12 +427,34 @@ beam_parameters["charge"] = beam_config["charge"]           # Charge in units of
 beam_parameters["radiate"] = beam_config["radiate"]         # TODO: add this when it's time
 beam_parameters["dir"] = beam_config["direction"]           # 1 if moving along the acc, -1 if moving antialong
 
+# -- Save .tfs files 
+save_tfs = system_config["save_tfs"]
 
-# ----------------------------
-# Parse command line arguments
-# ----------------------------
 
-print(f"Read from LatticeFiles and {dic_key}System entry")
+# --------------------------------
+#  Parse command line arguments
+# --------------------------------
+
+arg = parsed_args   # An alias just so I can write this faster
+
+# Parse the command line if needed
+if not arg.use_config:
+    print("--> Parsing command line arguments")
+
+    sequence_path = arg.sequence_path if arg.sequence_path else sequence_path 
+    sequence_name = arg.sequence_name if arg.sequence_name else sequence_name 
+    main_out = arg.main_output_path if arg.main_output_path else main_out 
+    save_tfs = arg.save_tfs if arg.save_tfs else save_tfs 
+    beam_parameters["dir"] = float(arg.dir) if arg.dir else beam_parameters["dir"]
+
+    tracking_config["turns"] = arg.turns if arg.turns else tracking_config["turns"]
+
+
+
+
+# -----------------------------------------
+# --- RUN MAIN SCRIPT ----
+# -----------------------------------------
 
 # -- We will check the different systems now and create the corresponding twiss
 match system:
@@ -431,13 +465,11 @@ match system:
         create_quads_data = system_config["optics_twiss"]
 
         # -- Paths to nominal output files
-        main_out = system_config["main_output_path"]
         twiss_path = system_config["measure_path"]                # Output file for the nominal twiss
         quadrupoles_path = system_config["optics_path"]           # Output file for the quads strengths and lengths
         integrals_path = system_config["integrals_path"]
 
-        # -- Save .tfs files 
-        save_tfs = system_config["save_tfs"]
+
         
         # TODO: I may have to add the make integrals option
         simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_out, twiss_path, quadrupoles_path, None, debug, make_integrals=True, _save_tfs = save_tfs, _integrals_path = integrals_path)
@@ -451,16 +483,12 @@ match system:
         track_flag = system_config["TBT_track"]
 
         # Where the E/C .madx file is 
-        errors_path = system_config["modifications_path"]
+        errors_path = system_config["modifications_path"] if not arg.modifications_path else arg.modifications_path
     
         # -- Paths to E/C output files
-        main_out = system_config["main_output_path"]
         twiss_path = system_config["measure_path"]                # Output file for the errors twiss
         quadrupoles_path = system_config["optics_path"]           # Output file for the quads strengths and lengths
-        track_path = system_config["track_path"]                   # Output file for the trackone
-
-        # -- Save .tfs files 
-        save_tfs = system_config["save_tfs"]
+        track_path = system_config["track_path"]                  # Output file for the trackone
 
         simulate_system(beam_parameters, sequence_path, sequence_name, create_measurement_twiss, create_quads_data, main_out, twiss_path, quadrupoles_path, track_path, debug, errors_path, track_flag, tracking_config, _save_tfs = save_tfs)
 
