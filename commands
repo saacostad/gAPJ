@@ -1,0 +1,79 @@
+home_dir=$(readlink -f $(dirname $(readlink -f "$0")))		# Directorio actual
+
+python_exec=python					# Ejecutable de python
+
+
+# ---------------------------------------
+# -- CREACIÓN DE LOS ARCHIVOS NOMINALES
+
+$python_exec $home_dir/simulateSystem.py -s nom \
+		-id $home_dir/inputs/lattices/lhc/lhcCardona.madx \
+		-od $home_dir/outputs/nominal/
+	
+
+# -----------------------------------
+# -- Creación de errores para tests
+
+# Crear errores
+$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip1 -w 200 -op inputs/ --output_format XTrack -re -rs 1e-5
+
+# No crear errores
+#$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip1 -w 400 -op inputs/ --output_format XTrack
+
+
+
+# -----------------------
+# SIMULACIÓN CON ERRORES
+
+# Equivalente al tbt-simulator
+$python_exec $home_dir/simulateSystem.py -s err \
+		-id inputs/lattices/lhc/lhcCardona.madx \
+		-od outputs/errors/ \
+		-ef inputs/IR_errors.madx \
+		-n 100	\
+		-b 1
+
+# Equivalente al ActionPhaseJump: calcula APJ y el avermax
+$python_exec $home_dir/calculateAPJ.py -s err \
+		-sf outputs/errors/E_track.parquet \
+		-md outputs/nominal/nominal_measurements_twiss.parquet \
+		-od outputs/errors/APJ/ \
+		-ab bpmsw.1l1.b1 \
+
+
+
+# -------------------- 
+# CORREGIR EL SISTEMA 
+
+# Equivalente a las correcciones halladas en ActionPhaseJump
+$python_exec $home_dir/calculateCorrections.py \
+		-id outputs/errors/APJ \
+		-md outputs/nominal \
+		-ef inputs/IR_errors+corrections.madx \
+		-las 14000 \
+		-lae 16000 \
+		-ras 18000 \
+		-rae 20000
+
+
+# -----------------------
+# SIMULACIÓN CON CORRECCIONES
+
+# Equivalente al tbt-simulator
+$python_exec $home_dir/simulateSystem.py -s corr \
+		-id inputs/lattices/lhc/lhcCardona.madx \
+		-od outputs/corrections/ \
+		-ef inputs/IR_errors+corrections.madx \
+		-n 100	\
+		-b 1
+
+# Equivalente al ActionPhaseJump: calcula APJ y el avermax
+$python_exec $home_dir/calculateAPJ.py -s corr \
+		-sf outputs/corrections/C_track.parquet \
+		-md outputs/nominal/nominal_measurements_twiss.parquet \
+		-od outputs/corrections/APJ/ \
+		-ab bpmsw.1l1.b1 \
+
+# --------------------
+# Probar beta-beting
+$python_exec $home_dir/modules/calculateBetaBeating.py
