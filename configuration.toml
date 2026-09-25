@@ -6,22 +6,21 @@
 
 # Main path where the sequence and beam params are
 main_input_path = "inputs/lattices/lhc/"
-sequence_path = "lhcCardona.madx"          # Name of the file with the seq
-params_path = "false"   # Name of the file with the beam's params
+sequence_path = "lhcCardona.madx"          	# Name of the file with the seq
 
 # Name of the sequence
-sequence_name = false			# Name of the sequence. If set to false, take the first sequence available
+sequence_name = false				# Name of the sequence. If set to false, take the first sequence available
 
 # Measuring elements keywords or patterns in names
-measure_class = ["Monitor", "BPM", "BPT"]
-optics_class = ["Quadrupole", "Multipole", ""]
+measure_class = ["Monitor", "BPM"]
+optics_class = ["Quadrupole"]
 
-# What parameters use for the twiss
-measure_parameters = ["name", "s", "betx", "bety", "mux", "muy"]
-optics_parameters = ["name", "s", "betx", "bety", "mux", "muy", "alfx", "alfy"]
+# What extra parameters to use for the twiss
+measure_parameters = []				# Defaults are "name", "s", "betx", "bety", "mux", "muy"
+optics_parameters = []				# Defaults are "name", "s", "betx", "bety", "mux", "muy", "alfx", "alfy"
 
 # Debug flag 
-debug = true       # If true, MADX will log to console 
+debug = true       				# If true, MADX will log to console. Functionality is broken so far
 
 
 [BeamParameters]
