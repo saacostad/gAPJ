@@ -49,7 +49,7 @@ def save_APJ_var(plane, s, NAMES, var, name):
 # --------------------------------
 # -- Parse command line
 
-print("Parsing command line arguments...")
+print("Parsing system...")
 
 parser = argparse.ArgumentParser()
 create_parser_args(parser)
@@ -64,7 +64,8 @@ system_config = None        # Configuration dict for special case use
 nominal_config = None        # Configuration dict for special case use
 
 # Read the config file and save it 
-with open("configuration.toml", "rb") as f:
+print(f"Parsing config file arguments in {parsed_args.config_file}...")
+with open(parsed_args.config_file, "rb") as f:
 
     # We only need the nominal and system's data
     general_config = tomllib.load(f)

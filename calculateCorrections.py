@@ -25,7 +25,11 @@ Using the APJ general formalism""")
 # Parse config file arguments
 # ----------------------------
 
-print("Parsing config file arguments...")
+print("Parsing system...")
+
+parser = argparse.ArgumentParser()
+create_parser_args(parser)
+parsed_args = parser.parse_args()
 
 lattice_config = None       # Configuration dict for general use
 nomi_config = None
@@ -33,7 +37,8 @@ errs_config = None
 cors_config = None
 
 # Read the config file and save it 
-with open("configuration.toml", "rb") as f:
+print(f"Parsing config file arguments in {parsed_args.config_file}...")
+with open(parsed_args.config_file, "rb") as f:
 
     general_config = tomllib.load(f)
 

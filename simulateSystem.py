@@ -18,7 +18,7 @@ import xtrack as xt
 import xobjects as xo
 from xtrack.twiss import strengths
 from modules.calculateBetaIntegrals import calculate_integrals
-from modules.data_tools.simulateSystem_parser import create_parser_args, parse  # To parse the code's parameters
+from modules.data_tools.simulateSystem_parser import create_parser, parse_system, parse_commands  # To parse the code's parameters
 import time 
 
 # I will import this one to get rid of a troublesome file 
@@ -151,25 +151,7 @@ def simulate_system(beam_params ,sequence_path, sequence_name,
         # Perform the twiss
         print(f"  -> Performing twiss calculation.")
 
-
-
-        # MÉTODO PROFE
-        # twiss_t = line.twiss(method = twiss_method, at_s=s_center)
-        # twiss = pd.DataFrame({
-        #     'NAME': tab.name,
-        #     'S': s_center,
-        #     'BETX': twiss_t.betx,
-        #     'BETY': twiss_t.bety,
-        #     'MUX': twiss_t.mux,
-        #     'MUY': twiss_t.muy,
-        #     'ALFX': twiss_t.alfx,
-        #     'ALFY': twiss_t.alfy
-        # })
-        # elem_mask = np.isin(twiss["NAME"], selected_names)
-        # pandas_data = twiss[elem_mask]
-
    
-        # MÉTODO YO
         twiss = line.twiss(method = twiss_method)
 
         # Filter the columns
@@ -369,13 +351,13 @@ C r e a t i n g   s y s t e m   s i m u l a t i o n
 
 # -- Parse command line
 
-print("Parsing command line arguments...")
+print("Parsing system argument...")
 
 parser = argparse.ArgumentParser()
-create_parser_args(parser)
+create_parser(parser)
 parsed_args = parser.parse_args()
 
-system = parse(parsed_args)
+system = parse_system(parsed_args)
 
 # Where to find the data to work with
 dic_key = 'Nominal' if system == 'N' else 'Errors' if system == 'E' else 'Corrections' if system == 'C' else 'Invalid'
@@ -384,7 +366,7 @@ dic_key = 'Nominal' if system == 'N' else 'Errors' if system == 'E' else 'Correc
 # Parse config file arguments
 # ----------------------------
 
-print("Parsing config file arguments...")
+print(f"Parsing config file arguments in {parsed_args.config_file}...")
 
 lattice_config = None       # Configuration dict for general use
 system_config = None        # Configuration dict for special case use
@@ -392,7 +374,7 @@ tracking_config = None      # Configuration for tracking
 beam_config = None          # Configuration for beam
 
 # Read the config file and save it 
-with open("configuration.toml", "rb") as f:
+with open(parsed_args.config_file, "rb") as f:
 
     general_config = tomllib.load(f)
 
@@ -401,22 +383,23 @@ with open("configuration.toml", "rb") as f:
     beam_config = general_config[f"BeamParameters"]
     tracking_config = general_config[f"TrackParameters"]
 
-print(f"Read from LatticeFiles and {dic_key}System entry")
 
 # -- General options: where are the lattices, what elements to get, etc...
 
 # -- Paths to lattice files 
 input_main_path = lattice_config["main_input_path"]
 sequence_path = input_main_path + lattice_config["sequence_path"]   # Where the sequence is located
-parameters_path = input_main_path + lattice_config["params_path"]   # Parameters such as the beam energy and so
 
 
 # -- Definitions quads strengths and lengths
 sequence_name = lattice_config["sequence_name"]             # The name of the sequence
+
 measure_class_temp = lattice_config["measure_class"]             # Which elements will be used as measurement points
 optics_class_temp = lattice_config["optics_class"]               # Which elements will be used as measurement points
-twiss_parameters = lattice_config["measure_parameters"]     # What parameters we want to save from the twiss file
-quad_parameters = lattice_config["optics_parameters"]       # What parameters we need for the quads (optics + integrals)
+
+twiss_parameters = ["name", "s", "betx", "bety", "mux", "muy"] + lattice_config["measure_parameters"]     # What parameters we want to save from the twiss file
+quad_parameters = ["name", "s", "betx", "bety", "mux", "muy", "alfx", "alfy"] + lattice_config["optics_parameters"]       # What parameters we need for the quads (optics + integrals)
+
 debug = lattice_config["debug"]                             # Debug flag
 
 # Make the lists go lower
@@ -432,6 +415,12 @@ beam_parameters["charge"] = beam_config["charge"]           # Charge in units of
 beam_parameters["radiate"] = beam_config["radiate"]         # TODO: add this when it's time
 beam_parameters["dir"] = beam_config["direction"]           # 1 if moving along the acc, -1 if moving antialong
 
+
+# ----------------------------
+# Parse command line arguments
+# ----------------------------
+
+print(f"Read from LatticeFiles and {dic_key}System entry")
 
 # -- We will check the different systems now and create the corresponding twiss
 match system:
