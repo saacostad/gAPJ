@@ -64,10 +64,10 @@ nomi_out_path = nomi_config["main_output_path"] if not arg.twiss_path else arg.t
 integrals_path = nomi_out_path + "/" + nomi_config["integrals_path"] + ".parquet"
 
 # Correction settings
-cors_config["left_arc"][0] = arg.left_arc_start if arg.left_arc_start else cors_config["left_arc"][0] 
-cors_config["left_arc"][1] = arg.left_arc_end if arg.left_arc_end else cors_config["left_arc"][1] 
-cors_config["right_arc"][0] = arg.right_arc_start if arg.right_arc_start else cors_config["right_arc"][0] 
-cors_config["right_arc"][1] = arg.right_arc_end if arg.right_arc_end else cors_config["right_arc"][1]
+cors_config["left_arc"][0] = float(arg.left_arc_start) if arg.left_arc_start else cors_config["left_arc"][0] 
+cors_config["left_arc"][1] = float(arg.left_arc_end) if arg.left_arc_end else cors_config["left_arc"][1] 
+cors_config["right_arc"][0] = float(arg.right_arc_start) if arg.right_arc_start else cors_config["right_arc"][0] 
+cors_config["right_arc"][1] = float(arg.right_arc_end) if arg.right_arc_end else cors_config["right_arc"][1]
 cors_config["modifications_path"] = arg.modifications_path if arg.modifications_path  else cors_config["modifications_path"]
 
 
