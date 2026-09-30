@@ -146,7 +146,11 @@ def create_parser(parser):
         help = "Right arc end position s for APJ calculation",
         dest = "right_arc_end"
     )
-
+    parser.add_argument(
+        "-ip", "--interaction_point",
+        help = "Name of the IP to get the corrections",
+        dest = "ip"
+    )
 
 def parse_system(parsed_args, system = "Invalid"):
     """ This function takes the parsed args and checks that the entries are allright """

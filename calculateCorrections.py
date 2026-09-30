@@ -69,10 +69,10 @@ cors_config["left_arc"][1] = float(arg.left_arc_end) if arg.left_arc_end else co
 cors_config["right_arc"][0] = float(arg.right_arc_start) if arg.right_arc_start else cors_config["right_arc"][0] 
 cors_config["right_arc"][1] = float(arg.right_arc_end) if arg.right_arc_end else cors_config["right_arc"][1]
 cors_config["modifications_path"] = arg.modifications_path if arg.modifications_path  else cors_config["modifications_path"]
-
+ip = arg.ip if arg.ip  else cors_config["ip"]
 
 # We'll create a function to calculate the APJ parameters easily
-def get_APJ_parameter(path, axis, left_arc, right_arc):
+def get_APJ_parameter(path, axis, left_arc, right_arc, _ip = ip):
     """ Given a sdds file with the APJ calculations, it formats it on the region of interest, filters the axis to deal with, 
     and calculates the average of this parameter on the arc. 
 
@@ -84,6 +84,7 @@ def get_APJ_parameter(path, axis, left_arc, right_arc):
     # Values list
     left_values = []
     right_values = []
+    ip_value = 0.0
 
     with open(path, 'r') as file:
 
@@ -101,31 +102,40 @@ def get_APJ_parameter(path, axis, left_arc, right_arc):
             s = float(data[2])
 
             # Check if it belongs to any of the interest regions/filters
-            if axis_val == filter and left_arc[0] <= s <= left_arc[1]:
-                left_values.append(value)
-            elif axis_val == filter and right_arc[0] <= s <= right_arc[1]: 
-                right_values.append(value)
+            if axis_val == filter:
+                if left_arc[0] <= s <= left_arc[1]:
+                        left_values.append(value)
+                elif right_arc[0] <= s <= right_arc[1]: 
+                    right_values.append(value)
+                elif data[1] == f'"{_ip}"': 
+                    # TODO: this whole function sucks because I'm using column index instead of a good data structure
+                    ip_value = value
+
        
 
     # Return the mean of the values encountered
-    return np.mean(left_values), np.mean(right_values)
+    return np.mean(left_values), np.mean(right_values), ip_value
 
 
 
 
-def get_observed_system(mxp, myp, pxp, pyp):
+def get_observed_system(mxp, myp, pxp, pyp, where = "arcs"):
     """ Given the 4 APJ .sdds paths, this function gets the values of each one of the APJ variables and,
     according to the theory, creates the right hand side vector to be solved by the system of equations 
+    
+    where: "arcs" for left-right arc analysis, "left" for left arc - ip analysis, "right" for ip - right arc analysis
 
     OUTPUT: np.array with the constants of RHS  |   value of delta_0x   |   value of delta_0y"""
 
     # Obtenemos acciones y fases para eje x
-    J0x, J1x = get_APJ_parameter(mxp, 'X', leftArc, rightArc)
-    P0x, P1x = get_APJ_parameter(pxp, 'X', leftArc, rightArc)
+    J0x, J1x, JxIP = get_APJ_parameter(mxp, 'X', leftArc, rightArc)
+    P0x, P1x, PxIP = get_APJ_parameter(pxp, 'X', leftArc, rightArc)
 
     # Igualmente para el eje y
-    J0y, J1y = get_APJ_parameter(myp, 'Y', leftArc, rightArc)
-    P0y, P1y = get_APJ_parameter(pyp, 'Y', leftArc, rightArc)
+    J0y, J1y, JyIP = get_APJ_parameter(myp, 'Y', leftArc, rightArc)
+    P0y, P1y, PyIP = get_APJ_parameter(pyp, 'Y', leftArc, rightArc)
+
+
 
     def calculate_S_contribution(J0, J1, P0, P1):
         """ Calculates the \\sin(\\psi_s) contribution according to the system of equations """
@@ -135,14 +145,25 @@ def get_observed_system(mxp, myp, pxp, pyp):
         """ Calculates the \\cos(\\psi_s) contribution according to the system of equations """
         return -np.sqrt(J1/J0)*np.sin(P1) + np.sin(P0)
     
-    # We calculate the RHS constants
-    SinCont_X = calculate_S_contribution(J0x, J1x, P0x, P1x)
-    cosCont_X = calculate_C_contribution(J0x, J1x, P0x, P1x)
-    SinCont_Y = calculate_S_contribution(J0y, J1y, P0y, P1y)
-    cosCont_Y = calculate_C_contribution(J0y, J1y, P0y, P1y)
+    if where == "arcs":
+        # We calculate the RHS constants for the arcs
+        _J0x, _J1x, _P0x, _P1x = J0x, J1x, P0x, P1x
+        _J0y, _J1y, _P0y, _P1y = J0y, J1y, P0y, P1y
+    elif where == "left":
+        # Or for the left/right regions
+        _J0x, _J1x, _P0x, _P1x = J0x, JxIP, P0x, PxIP
+        _J0y, _J1y, _P0y, _P1y = J0y, JyIP, P0y, PyIP
+    elif where == "right":
+        _J0x, _J1x, _P0x, _P1x = JxIP, J1x, PxIP, P1x
+        _J0y, _J1y, _P0y, _P1y = JyIP, J1y, PyIP, P1y
+
+    SinCont_X = calculate_S_contribution(_J0x, _J1x, _P0x, _P1x)
+    cosCont_X = calculate_C_contribution(_J0x, _J1x, _P0x, _P1x)
+    SinCont_Y = calculate_S_contribution(_J0y, _J1y, _P0y, _P1y)
+    cosCont_Y = calculate_C_contribution(_J0y, _J1y, _P0y, _P1y)
 
     # Return the RHS vector
-    return np.array([SinCont_X, cosCont_X, SinCont_Y, cosCont_Y]), P0x, P0y
+    return np.array([SinCont_X, cosCont_X, SinCont_Y, cosCont_Y]), _P0x, _P0y
 
 
 
@@ -189,6 +210,10 @@ if __name__ == '__main__':
     # First, we get the right hand side vector of the system 
     RHS, delta0_x, delta0_y = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath)
 
+    # TODO: make this optional in case we only want arcs analysis
+    RHS_L, delta0_x_L, delta0_y_L = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath, where = "left")
+    RHS_R, delta0_x_R, delta0_y_R = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath, where = "right")
+
     print("  -> Creating LHS of system of equations")
     print(f"  \\__ Getting correction quadrupoles optical parameters from {integrals_path}")
 
@@ -196,21 +221,35 @@ if __name__ == '__main__':
     latticeDF = get_quadrupoles_lattice_functions(integrals_path, QUADRUPOLES_SELECTION)
 
     # We will now create simple lists of the lattice functions for easier access
+    # TODO: make this so it takes a left/right quadrupoles vector 
     BETX = latticeDF['IBX'].to_numpy()      # We're not using BETX/Y because we actually want the integrals of them
     BETY = latticeDF['IBY'].to_numpy()
     MUX = latticeDF['MUX'].to_numpy()
     MUY = latticeDF['MUY'].to_numpy()
     L = latticeDF['L'].to_numpy()
     
+    
 
-    # We'll create the residual function to use with Least_Squares()
+    BETX_L, BETX_R = BETX[:2], BETX[-2:]
+    BETY_L, BETY_R = BETY[:2], BETY[-2:]
+    MUX_L, MUX_R = MUX[:2], MUX[-2:]
+    MUY_L, MUY_R = MUY[:2], MUY[-2:]    # We'll create the residual function to use with Least_Squares()
+
+
     def residual(K):
         # We create the constants for both axis
         Sx, Cx = createSystem(K, BETX, MUX, delta0_x, axis = 'X')
         Sy, Cy = createSystem(K, BETY, MUY, delta0_y, axis = 'Y')
+
+        Sx_L, Cx_L = createSystem(K[:2], BETX_L, MUX_L, delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = createSystem(K[:2], BETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        
+        Sx_R, Cx_R = createSystem(K[-2:], BETX_R, MUX_R, delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = createSystem(K[-2:], BETY_R, MUY_R, delta0_y_R, axis = 'Y') 
         
         # Return the residual
-        return np.array([Sx, Cx, -Sy, -Cy]) - RHS
+        # return np.array([Sx, Cx, -Sy, -Cy]) - RHS
+        return np.array([Sx, Cx, -Sy, -Cy, Sx_L, Cx_L, -Sy_L, -Cy_L, Sx_R, Cx_R, -Sy_R, -Cy_R]) - np.concatenate((RHS, RHS_L, RHS_R))
 
 
     print("\nSolving the system...")
