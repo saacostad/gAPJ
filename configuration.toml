@@ -12,7 +12,7 @@ sequence_path = "lhcCardona.madx"          	# Name of the file with the seq
 sequence_name = false				# Name of the sequence. If set to false, take the first sequence available
 
 # Measuring elements keywords or patterns in names
-measure_class = ["Monitor", "BPM"]
+measure_class = ["Monitor", "BPM", "ip1"]
 optics_class = ["Quadrupole"]
 
 # What extra parameters to use for the twiss
@@ -80,7 +80,7 @@ optics_twiss = true             # Twiss of the optics (quadrupoles)
 
 # IMPORTANT: these nominal files will be used throughout the code, cannot be changed. 
 # For the program to work, all of them have to exist
-main_output_path = "outputs/lhc/nominal"
+main_output_path = "outputs/nominal"
 measure_path = "nominal_measurements_twiss"		# Note: will be saved in packet format to read faster, 
 optics_path = "nominal_quads_twiss"			# if needed in .tfs, then activate save_tfs option
 integrals_path = "nominal_optics_integrals"		 
@@ -96,10 +96,10 @@ optics_twiss = 1             # Twiss of the optics (quadrupoles)
 TBT_track = 1                # Wether or not to track
 
 # Input options (where the erros/corrections will be)
-modifications_path = "inputs/lhc/IR_errors.madx"
+modifications_path = "inputs/IR_errors.madx"
 
 # Output options
-main_output_path = "outputs/lhc/errors"
+main_output_path = "outputs/errors"
 measure_path = "E_measurements_twiss"
 optics_path = "E_quads_twiss"
 track_path = "E_track"
@@ -128,8 +128,8 @@ optics_twiss = 1             # Twiss of the optics (quadrupoles)
 TBT_track = true                # Wether or not to track
 
 # Output options
-modifications_path = "inputs/lhc/IR_errors+corrections.madx"		# This is the file with errors+corrections
-corrections_path = "outputs/lhc/corrections/corrections.madx"		# This one is the file with only the corrections
+modifications_path = "inputs/IR_errors+corrections.madx"		# This is the file with errors+corrections
+corrections_path = "outputs/corrections/corrections.madx"		# This one is the file with only the corrections
 
 # Output options
 main_output_path = "outputs/corrections"
@@ -145,6 +145,7 @@ plot_APJ = 1
 
 # Reference BPM and arcs for APJ calculation
 ref_bpm = "BPMSW.1L1.B1"
+ip = "ip1"
 left_arc = [14000, 16000]
 right_arc = [18000, 20000]
 correction_quadrupoles = ["mqxa.3l1", "mqxb.b2l1", "mqxb.a2r1", "mqxa.3r1"]			# These have to be at least 2

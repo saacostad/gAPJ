@@ -1,21 +1,21 @@
 home_dir=$(readlink -f $(dirname $(readlink -f "$0")))		# Directorio actual
 
 python_exec=python					# Ejecutable de python
-
+config_file=configuration_fcc_old.toml
 
 # ---------------------------------------
 # -- CREACIÓN DE LOS ARCHIVOS NOMINALES
 
-$python_exec $home_dir/simulateSystem.py -s nom \
-		-id $home_dir/inputs/lattices/lhc/lhcCardona.madx \
-		-od $home_dir/outputs/nominal/
+#$python_exec $home_dir/simulateSystem.py -s nom \
+#		-id $home_dir/inputs/lattices/lhc/lhcCardona.madx \
+#		-od $home_dir/outputs/nominal/
 	
 
 # -----------------------------------
 # -- Creación de errores para tests
 
 # Crear errores
-$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip1 -w 200 -op inputs/ --output_format XTrack -re -rs 1e-5
+$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip.2 -w 500 -op inputs/ --output_format XTrack -re -rs 1e-5
 
 # No crear errores
 #$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip1 -w 400 -op inputs/ --output_format XTrack
@@ -27,6 +27,8 @@ $python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads
 
 # Equivalente al tbt-simulator
 $python_exec $home_dir/simulateSystem.py -s err \
+		-C \
+		-cf $config_file \
 		-id inputs/lattices/lhc/lhcCardona.madx \
 		-od outputs/errors/ \
 		-ef inputs/IR_errors.madx \
@@ -35,6 +37,8 @@ $python_exec $home_dir/simulateSystem.py -s err \
 
 # Equivalente al ActionPhaseJump: calcula APJ y el avermax
 $python_exec $home_dir/calculateAPJ.py -s err \
+		-C \
+		-cf $config_file \
 		-sf outputs/errors/E_track.parquet \
 		-md outputs/nominal/nominal_measurements_twiss.parquet \
 		-od outputs/errors/APJ/ \
@@ -47,13 +51,12 @@ $python_exec $home_dir/calculateAPJ.py -s err \
 
 # Equivalente a las correcciones halladas en ActionPhaseJump
 $python_exec $home_dir/calculateCorrections.py \
+		-C \
+		-cf $config_file \
 		-id outputs/errors/APJ \
 		-md outputs/nominal \
 		-ef inputs/IR_errors+corrections.madx \
-		-las 14000 \
-		-lae 16000 \
-		-ras 18000 \
-		-rae 20000
+
 
 
 # -----------------------
@@ -61,6 +64,8 @@ $python_exec $home_dir/calculateCorrections.py \
 
 # Equivalente al tbt-simulator
 $python_exec $home_dir/simulateSystem.py -s corr \
+		-C \
+		-cf $config_file \
 		-id inputs/lattices/lhc/lhcCardona.madx \
 		-od outputs/corrections/ \
 		-ef inputs/IR_errors+corrections.madx \
@@ -69,6 +74,8 @@ $python_exec $home_dir/simulateSystem.py -s corr \
 
 # Equivalente al ActionPhaseJump: calcula APJ y el avermax
 $python_exec $home_dir/calculateAPJ.py -s corr \
+		-C \
+		-cf $config_file \
 		-sf outputs/corrections/C_track.parquet \
 		-md outputs/nominal/nominal_measurements_twiss.parquet \
 		-od outputs/corrections/APJ/ \
