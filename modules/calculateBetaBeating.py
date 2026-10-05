@@ -2,11 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
 
 """
 This script will calculate the beta-beating of the lattice before and
 after applying the corrections.
 """
+
+# We'll parse the IP 
+parser = argparse.ArgumentParser()
+# -- Choose which system to simulate
+parser.add_argument(
+        "-ip", "--interaction_point",
+        help="Which interaction point to plot",
+        dest="ip",
+    )
+parsed_args = parser.parse_args()
+ip = parsed_args.ip
 
 nominal = "outputs/nominal/nominal_measurements_twiss.parquet"
 apj = "_measurements_twiss.parquet"
@@ -40,7 +52,7 @@ def calc_beta_beating(nom_path, apj_path):
     beta_beating_x = (apj_beta_x - nom_beta_x) / nom_beta_x
     beta_beating_y = (apj_beta_y - nom_beta_y) / nom_beta_y
 
-    s_ip = (nom["S"].loc[nom["NAME"] == "ip.2"])
+    s_ip = (nom["S"].loc[nom["NAME"] == ip])
 
     return beta_beating_x, beta_beating_y, nom_s, s_ip
 
@@ -79,8 +91,8 @@ s_ip = s_ip.values[0]
 ax_top.set_title(r"$\beta$-Beating en eje X")
 ax_top.plot(sb, bx_bef, label = "Before corrections")
 ax_top.plot(sa, bx_aft, label = "After corrections")
-ax_top.axvline(s_ip, color = "red")
-ax_top.axhline(0.0, color = "black")
+ax_top.axvline(s_ip, color = "black", lw = 0.5)
+ax_top.axhline(0.0, color = "black", lw = 0.5)
 ax_top.grid()
 ax_top.legend()
 ax_top.set_xlabel("s [m]")
@@ -90,8 +102,8 @@ ax_top.set_ylabel(r"$\beta$-beating")
 ax_bottom.set_title(r"$\beta$-Beating en eje Y")
 ax_bottom.plot(sb, by_bef, label = "Before corrections")
 ax_bottom.plot(sa, by_aft, label = "After corrections")
-ax_bottom.axvline(s_ip, color = "red")
-ax_bottom.axhline(0.0, color = "black")
+ax_bottom.axvline(s_ip, color = "black", lw = 0.5)
+ax_bottom.axhline(0.0, color = "black", lw = 0.5)
 ax_bottom.grid()
 ax_bottom.legend()
 ax_bottom.set_xlabel("s [m]")

@@ -139,7 +139,7 @@ def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
 
     # Create the matricial system
     Q, u, v = CreateSystem(Betas, Phis, Kerrors, p, grad)
-    
+
     # Create the big constants
     vQu, vQv, uQu, uQv = CreateConstants(Q, u, v)
 
@@ -148,7 +148,7 @@ def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
     sind = np.sin(delta0)
     
     # Return the two cosntants
-    return cosd*vQu - sind*vQv, -cosd*uQu + sind*uQv
+    return cosd*vQu - sind*vQv, -cosd*uQu + sind*uQv, np.diag(1.0 / (Kerrors + 1e-12)) @ Q
 
     
     

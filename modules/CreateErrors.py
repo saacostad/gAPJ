@@ -133,8 +133,8 @@ else:
             err = np.random.normal(0.0, float(args.random_sigma))
             
             # Add a random bigger error
-            if np.random.uniform(0.0, 1.0) < 0.1:
-                err *= 5.
+            if np.random.uniform(0.0, 1.0) < 0.05:
+                err *= 10.
 
             sign = "+" if err > 0.0 else "-"
 

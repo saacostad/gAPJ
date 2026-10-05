@@ -1,26 +1,34 @@
 home_dir=$(readlink -f $(dirname $(readlink -f "$0")))		# Directorio actual
 
 python_exec=python					# Ejecutable de python
-config_file=configuration_fcc_old.toml
+
+
+# FCC config
+#config_file=configuration_fcc_old_BK.toml
+#ip=ip.2
+
+# LHC config
+config_file=configuration.toml
+ip=ip1
 
 # ---------------------------------------
 # -- CREACIÓN DE LOS ARCHIVOS NOMINALES
 
-#$python_exec $home_dir/simulateSystem.py -s nom \
-#		-C \
-#		-cf $config_file \
-#		-id $home_dir/inputs/lattices/lhc/lhcCardona.madx \
-#		-od $home_dir/outputs/nominal/
+$python_exec $home_dir/simulateSystem.py -s nom \
+		-C \
+		-cf $config_file \
+		-id $home_dir/inputs/lattices/lhc/lhcCardona.madx \
+		-od $home_dir/outputs/nominal/
 	
 
 # -----------------------------------
 # -- Creación de errores para tests
 
 # Crear errores
-$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip.2 -w 500 -op inputs/ --output_format XTrack -re -rs 1e-5
+$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip $ip -w 200 -op inputs/ --output_format XTrack -re -rs 1e-5
 
 # No crear errores
-#$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip ip1 -w 400 -op inputs/ --output_format XTrack
+#$python_exec $home_dir/modules/CreateErrors.py -if outputs/nominal/nominal_quads_twiss.parquet -ip $ip -w 400 -op inputs/ --output_format XTrack
 
 
 
@@ -85,4 +93,4 @@ $python_exec $home_dir/calculateAPJ.py -s corr \
 
 # --------------------
 # Probar beta-beting
-$python_exec $home_dir/modules/calculateBetaBeating.py
+$python_exec $home_dir/modules/calculateBetaBeating.py -ip $ip
