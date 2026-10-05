@@ -7,6 +7,8 @@ config_file=configuration_fcc_old.toml
 # -- CREACIÓN DE LOS ARCHIVOS NOMINALES
 
 #$python_exec $home_dir/simulateSystem.py -s nom \
+#		-C \
+#		-cf $config_file \
 #		-id $home_dir/inputs/lattices/lhc/lhcCardona.madx \
 #		-od $home_dir/outputs/nominal/
 	

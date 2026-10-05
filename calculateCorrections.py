@@ -191,7 +191,7 @@ def get_quadrupoles_lattice_functions(path, QPlist):
         MAIN EXECUTION OF THE SCRIPT
 =================================================================
 """
-
+N = 3
 if __name__ == '__main__':
     
     print("\nPreparing system...")
@@ -230,10 +230,10 @@ if __name__ == '__main__':
     
     
 
-    BETX_L, BETX_R = BETX[:2], BETX[-2:]
-    BETY_L, BETY_R = BETY[:2], BETY[-2:]
-    MUX_L, MUX_R = MUX[:2], MUX[-2:]
-    MUY_L, MUY_R = MUY[:2], MUY[-2:]    # We'll create the residual function to use with Least_Squares()
+    BETX_L, BETX_R = BETX[:N], BETX[-N:]
+    BETY_L, BETY_R = BETY[:N], BETY[-N:]
+    MUX_L, MUX_R = MUX[:N], MUX[-N:]
+    MUY_L, MUY_R = MUY[:N], MUY[-N:]    # We'll create the residual function to use with Least_Squares()
 
 
     def residual(K):
@@ -241,11 +241,11 @@ if __name__ == '__main__':
         Sx, Cx = createSystem(K, BETX, MUX, delta0_x, axis = 'X')
         Sy, Cy = createSystem(K, BETY, MUY, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L = createSystem(K[:2], BETX_L, MUX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L = createSystem(K[:2], BETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L = createSystem(K[:N], BETX_L, MUX_L, delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = createSystem(K[:N], BETY_L, MUY_L, delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R = createSystem(K[-2:], BETX_R, MUX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R = createSystem(K[-2:], BETY_R, MUY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R = createSystem(K[-N:], BETX_R, MUX_R, delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = createSystem(K[-N:], BETY_R, MUY_R, delta0_y_R, axis = 'Y') 
         
         # Return the residual
         # return np.array([Sx, Cx, -Sy, -Cy]) - RHS
@@ -262,7 +262,8 @@ if __name__ == '__main__':
     print("\nErrors estimation: \n")
     
     for i in range(len(ERR_estimations)):
-        print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g} \t\t residue of {residual(ERR_estimations)[i]:.2g}")
+        # print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g} \t\t residue of {residual(ERR_estimations)[i]:.2g}")
+        print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g}")
 
     # Write to the file
     # Build lookup dictionary

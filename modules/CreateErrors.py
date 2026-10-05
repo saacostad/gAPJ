@@ -131,6 +131,11 @@ else:
 
             # We'll write the errors for each of the quadrupoles 
             err = np.random.normal(0.0, float(args.random_sigma))
+            
+            # Add a random bigger error
+            if np.random.uniform(0.0, 1.0) < 0.1:
+                err *= 5.
+
             sign = "+" if err > 0.0 else "-"
 
             if args.format == "MADX":

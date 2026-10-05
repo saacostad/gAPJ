@@ -40,11 +40,13 @@ def calc_beta_beating(nom_path, apj_path):
     beta_beating_x = (apj_beta_x - nom_beta_x) / nom_beta_x
     beta_beating_y = (apj_beta_y - nom_beta_y) / nom_beta_y
 
-    return beta_beating_x, beta_beating_y, nom_s
+    s_ip = (nom["S"].loc[nom["NAME"] == "ip.2"])
+
+    return beta_beating_x, beta_beating_y, nom_s, s_ip
 
 
-bx_bef, by_bef, sb = calc_beta_beating(nominal, errors_path_apj)
-bx_aft, by_aft, sa = calc_beta_beating(nominal, corrections_path_apj)
+bx_bef, by_bef, sb, s_ip = calc_beta_beating(nominal, errors_path_apj)
+bx_aft, by_aft, sa, s_ip = calc_beta_beating(nominal, corrections_path_apj)
 
 
 
@@ -73,10 +75,12 @@ fig, (ax_top, ax_bottom) = plt.subplots(
     sharex=True,
     constrained_layout=True,
 )
-
+s_ip = s_ip.values[0]
 ax_top.set_title(r"$\beta$-Beating en eje X")
 ax_top.plot(sb, bx_bef, label = "Before corrections")
 ax_top.plot(sa, bx_aft, label = "After corrections")
+ax_top.axvline(s_ip, color = "red")
+ax_top.axhline(0.0, color = "black")
 ax_top.grid()
 ax_top.legend()
 ax_top.set_xlabel("s [m]")
@@ -86,6 +90,8 @@ ax_top.set_ylabel(r"$\beta$-beating")
 ax_bottom.set_title(r"$\beta$-Beating en eje Y")
 ax_bottom.plot(sb, by_bef, label = "Before corrections")
 ax_bottom.plot(sa, by_aft, label = "After corrections")
+ax_bottom.axvline(s_ip, color = "red")
+ax_bottom.axhline(0.0, color = "black")
 ax_bottom.grid()
 ax_bottom.legend()
 ax_bottom.set_xlabel("s [m]")
