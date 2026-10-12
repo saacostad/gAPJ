@@ -66,6 +66,15 @@ def CreateM(B, P, A, K, sign):
     for i in range(n):
         betas.append(get_beta_function(  sign, np.sign(K[i]), np.abs(K[i]), B[i], A[i]  ))
 
+
+    # TODO: list 
+    # 1. Check if the beta functions I'm generating are right
+    # 2. Create a phase advanced function psi(s) = psi_0 + int_0^s 1/beta(s) ds 
+    # 3. Create the integrans: 4 in total, as seen in my chalkboard
+    # 4. Create the integrals
+    # 5. With that, M shall be done. 
+    # 6. Change the code so createSystem takes the nominal M matrix instead of recalculating it each time
+
     
     # hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
     # return hatM
