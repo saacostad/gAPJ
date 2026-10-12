@@ -108,7 +108,7 @@ APJ_path = "APJ/"
 save_tfs = 1					# Select wether we'll save the .tfs file
 
 # Plot options
-plot_APJ = 1
+plot_APJ = 0
 
 # Reference BPM and arcs for APJ calculation
 ref_bpm = "BPMSW.1L1.B1"
@@ -141,7 +141,7 @@ APJ_path = "APJ/"
 save_tfs = false					# Select wether we'll save the .tfs file
 
 # Plot options
-plot_APJ = 1
+plot_APJ = 0
 
 # Reference BPM and arcs for APJ calculation
 ref_bpm = "BPMSW.1L1.B1"
