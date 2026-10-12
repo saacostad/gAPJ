@@ -4,6 +4,58 @@ according to the general model
 """
 
 import numpy as np 
+from scipy.integrate import quad
+
+# TODO: would be better to import the function or to do something with the beta function
+def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
+    """ This function returns a ready-to-use function representing beta(s) inside of a quadrupole.
+    It takes the sign (direction of the beam * plane * charge of the particle, either -1 or 1 depending on the convention used),
+    the element's magnetic gradient K and entrance beta_0 and alfa_0 """
+    
+    # In the case we get weird quadrupoles, just return 0
+    if KK == 0.0:
+        return lambda x: 0.0
+
+    K = np.sqrt(abs(KK))         # Helper variable
+    case = np.sign(_sign * sign_K)   # Get if we're focusing or defocusing
+    # Focusing case 
+    if case > 0:
+
+        def beta(s):
+            ks = K*s 
+            sin = np.sin(ks)
+            cos = np.cos(ks)
+            return beta0*cos**2 - 2.*alfa0*(sin*cos/K) + ((1.+alfa0**2)/beta0)*(sin**2)/KK
+        return beta
+
+    else: 
+        # Defocusin case: change sin/cos for sinh/cosh
+        def beta(s):
+            ks = K*s 
+            sinh = np.sinh(ks)
+            cosh = np.cosh(ks)
+            return beta0*cosh**2 - 2.*alfa0*(sinh*cosh/K) + ((1.+alfa0**2)/beta0)*(sinh**2)/KK
+        return beta
+
+
+
+# TODO: here is where we'll change the integrals
+def CreateM(B, P, A, K, sign):
+    # We create the matrix M 
+    #-------------------------------
+
+    n = len(P)  # Number of Quadrupoles
+    
+    hatM = np.zeros((n, n))    # Create a square matrix first
+
+    i, j = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
+    
+    hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
+
+    return hatM
+
+
+
 
 
 def NeummanInverse(T, grad = 8):
@@ -28,20 +80,6 @@ def NeummanInverse(T, grad = 8):
         
     return S
 
-
-def CreateM(B, P):
-    # We create the matrix M 
-    #-------------------------------
-
-    n = len(P)  # Number of Quadrupoles
-    
-    hatM = np.zeros((n, n))    # Create a square matrix first
-
-    i, j = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
-    
-    hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
-
-    return hatM
 
 def CreateQ(hatM, K, p, grad = 8):
     """
@@ -77,7 +115,7 @@ def CreateQ(hatM, K, p, grad = 8):
 
     
 
-def CreateSystem(B, P, K, p = 1.0, grad = 8):
+def CreateSystem(B, P, A, K, p = 1.0, grad = 8):
     """
     This function takes the system's \\eta's, \\phi's and quadrupole magnetic errors \\Delta K
     and returns a tuple with the matrix \\hat Q, and the vectors \\vec u and \\vec v following that
@@ -90,7 +128,7 @@ def CreateSystem(B, P, K, p = 1.0, grad = 8):
 
     u = np.sqrt(B) * np.sin(P)
     v = np.sqrt(B) * np.cos(P)
-    hatM = CreateM(B, P)
+    hatM = CreateM(B, P, A, K, p)
 
     Q = CreateQ(hatM, K, p, grad)
 
@@ -126,7 +164,7 @@ def createFirstOrderMatrix(ux, vx, uy, vy):
 """
 HERE I'LL TRY TO CREATE THE SYSTEM WITH ONLY 2 BASES SIN(PSI) AND COS(PSI)
 """
-def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
+def createSystem_base2(Kerrors, Betas, Phis, Alphas, delta0, axis, grad = 8):
     """ This function takes the Betas, Phis and errors (and the \\delta_0 value) and creates and evaluates
     the "Simulated" side of the system of equations.
 
@@ -138,7 +176,7 @@ def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
     p = 1.0 if axis == 'X' else -1.0
 
     # Create the matricial system
-    Q, u, v = CreateSystem(Betas, Phis, Kerrors, p, grad)
+    Q, u, v = CreateSystem(Betas, Phis, Alphas, Kerrors, p, grad)
 
     # Create the big constants
     vQu, vQv, uQu, uQv = CreateConstants(Q, u, v)

@@ -229,6 +229,8 @@ if __name__ == '__main__':
     BETY = latticeDF['IBY'].to_numpy()
     MUX = latticeDF['MUX'].to_numpy()
     MUY = latticeDF['MUY'].to_numpy()
+    ALPX = latticeDF['ALFX'].to_numpy()
+    ALPY = latticeDF['ALFY'].to_numpy()
     L = latticeDF['L'].to_numpy()
     
     
@@ -237,6 +239,8 @@ if __name__ == '__main__':
     BETY_L, BETY_R = BETY[:N], BETY[-N:]
     MUX_L, MUX_R = MUX[:N], MUX[-N:]
     MUY_L, MUY_R = MUY[:N], MUY[-N:]    # We'll create the residual function to use with Least_Squares()
+    ALPX_L, ALPX_R = ALPX[:N], ALPX[-N:]
+    ALPY_L, ALPY_R = ALPY[:N], ALPY[-N:]
     
     save_Q = True
 
@@ -244,14 +248,14 @@ if __name__ == '__main__':
         global Qx, Qy
 
         # We create the constants for both axis
-        Sx, Cx, Qx = createSystem(K, BETX, MUX, delta0_x, axis = 'X')
-        Sy, Cy, Qy = createSystem(K, BETY, MUY, delta0_y, axis = 'Y')
+        Sx, Cx, Qx = createSystem(K, BETX, MUX, ALPX, delta0_x, axis = 'X')
+        Sy, Cy, Qy = createSystem(K, BETY, MUY, ALPY, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L, _ = createSystem(K[:N], BETX_L, MUX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L, _ = createSystem(K[:N], BETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L, _ = createSystem(K[:N], BETX_L, MUX_L, ALPX_L, delta0_x_L, axis = 'X')
+        Sy_L, Cy_L, _ = createSystem(K[:N], BETY_L, MUY_L, ALPY_L, delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R, _ = createSystem(K[-N:], BETX_R, MUX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R, _ = createSystem(K[-N:], BETY_R, MUY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R, _ = createSystem(K[-N:], BETX_R, MUX_R, ALPX_R, delta0_x_R, axis = 'X')
+        Sy_R, Cy_R, _ = createSystem(K[-N:], BETY_R, MUY_R, ALPY_R, delta0_y_R, axis = 'Y') 
         
         # Return the residual
         # return np.array([Sx, Cx, -Sy, -Cy]) - RHS
