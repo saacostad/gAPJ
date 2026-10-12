@@ -18,6 +18,7 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
 
     K = np.sqrt(abs(KK))         # Helper variable
     case = np.sign(_sign * sign_K)   # Get if we're focusing or defocusing
+
     # Focusing case 
     if case > 0:
 
@@ -41,18 +42,33 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
 
 # TODO: here is where we'll change the integrals
 def CreateM(B, P, A, K, sign):
-    # We create the matrix M 
-    #-------------------------------
-
-    n = len(P)  # Number of Quadrupoles
+    """ We'll create the M propagation matrix.
+    -- Inputs:
+    B: NOMINAL ENTRANCE beta functions of the correction quadrupoles
+    P: Same for Psi functions
+    A: Same but alpha
+    K: Same but the quadrupole gradient strength
+    sign: Sign for wheter we are focusing or defocusing (beams direction * axis)
+    """
     
+    # -- Prepare the matrix
+    n = len(P)  # Number of Quadrupoles
     hatM = np.zeros((n, n))    # Create a square matrix first
-
     i, j = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
     
-    hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
 
-    return hatM
+    #-----------------------------------------  
+    #       Create auxiliary functions
+    #-----------------------------------------  
+
+    # -- Create an array of the beta functions for every corrections quadrupole]
+    betas = list()
+    for i in range(n):
+        betas.append(get_beta_function(  sign, np.sign(K[i]), np.abs(K[i]), B[i], A[i]  ))
+
+    
+    # hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
+    # return hatM
 
 
 
@@ -115,7 +131,7 @@ def CreateQ(hatM, K, p, grad = 8):
 
     
 
-def CreateSystem(B, P, A, K, p = 1.0, grad = 8):
+def CreateSystem(B, P, K, p = 1.0, grad = 8):
     """
     This function takes the system's \\eta's, \\phi's and quadrupole magnetic errors \\Delta K
     and returns a tuple with the matrix \\hat Q, and the vectors \\vec u and \\vec v following that
@@ -164,7 +180,7 @@ def createFirstOrderMatrix(ux, vx, uy, vy):
 """
 HERE I'LL TRY TO CREATE THE SYSTEM WITH ONLY 2 BASES SIN(PSI) AND COS(PSI)
 """
-def createSystem_base2(Kerrors, Betas, Phis, Alphas, delta0, axis, grad = 8):
+def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
     """ This function takes the Betas, Phis and errors (and the \\delta_0 value) and creates and evaluates
     the "Simulated" side of the system of equations.
 
@@ -176,7 +192,7 @@ def createSystem_base2(Kerrors, Betas, Phis, Alphas, delta0, axis, grad = 8):
     p = 1.0 if axis == 'X' else -1.0
 
     # Create the matricial system
-    Q, u, v = CreateSystem(Betas, Phis, Alphas, Kerrors, p, grad)
+    Q, u, v = CreateSystem(Betas, Phis, Kerrors, p, grad)
 
     # Create the big constants
     vQu, vQv, uQu, uQv = CreateConstants(Q, u, v)
@@ -186,7 +202,7 @@ def createSystem_base2(Kerrors, Betas, Phis, Alphas, delta0, axis, grad = 8):
     sind = np.sin(delta0)
     
     # Return the two cosntants
-    return cosd*vQu - sind*vQv, -cosd*uQu + sind*uQv, np.diag(1.0 / (Kerrors + 1e-12)) @ Q
+    return cosd*vQu - sind*vQv, -cosd*uQu + sind*uQv
 
     
     

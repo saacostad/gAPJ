@@ -9,6 +9,7 @@ from scipy.optimize import least_squares
 
 # The math package for calculation
 from modules.APJ.matricial_system import createSystem_base2 as createSystem   # This is the left hand side of the equation
+from modules.APJ.matricial_system import createM
 
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
@@ -224,38 +225,57 @@ if __name__ == '__main__':
     latticeDF = get_quadrupoles_lattice_functions(integrals_path, QUADRUPOLES_SELECTION)
 
     # We will now create simple lists of the lattice functions for easier access
-    # TODO: make this so it takes a left/right quadrupoles vector 
-    BETX = latticeDF['IBX'].to_numpy()      # We're not using BETX/Y because we actually want the integrals of them
-    BETY = latticeDF['IBY'].to_numpy()
-    MUX = latticeDF['MUX'].to_numpy()
-    MUY = latticeDF['MUY'].to_numpy()
-    ALPX = latticeDF['ALFX'].to_numpy()
-    ALPY = latticeDF['ALFY'].to_numpy()
-    L = latticeDF['L'].to_numpy()
-    
-    
+    Knom = latticeDF['K'].to_numpy()            # Nominal quadrupole strengths
+    L = latticeDF['L'].to_numpy()               # Length of the quadrupole (so we know where to integrate)
 
+    BETX = latticeDF['BETX'].to_numpy()         # Nominal entrance beta functions
+    BETY = latticeDF['BETY'].to_numpy()
+    
+    intBETX = latticeDF['IBX'].to_numpy()       # Integrals of the beta functions
+    intBETY = latticeDF['IBY'].to_numpy()
+    
+    MUX = latticeDF['MUX'].to_numpy()           # Phase advance on the entrance
+    MUY = latticeDF['MUY'].to_numpy()
+    
+    ALPX = latticeDF['ALFX'].to_numpy()         # Alfa on the entrance
+    ALPY = latticeDF['ALFY'].to_numpy()
+    
+    # -- Here we separate this data on the left and right side of the IR 
+    Knom_L, Knom_R = Knom[:N], Knom[-N:]
     BETX_L, BETX_R = BETX[:N], BETX[-N:]
     BETY_L, BETY_R = BETY[:N], BETY[-N:]
+    intBETX_L, intBETX_R = intBETX[:N], intBETX[-N:]
+    intBETY_L, intBETY_R = intBETY[:N], intBETY[-N:]
     MUX_L, MUX_R = MUX[:N], MUX[-N:]
     MUY_L, MUY_R = MUY[:N], MUY[-N:]    # We'll create the residual function to use with Least_Squares()
     ALPX_L, ALPX_R = ALPX[:N], ALPX[-N:]
     ALPY_L, ALPY_R = ALPY[:N], ALPY[-N:]
-    
-    save_Q = True
 
+
+    # ------------------------------------------------
+    #   CREATION OF THE NOMINAL PROPAGATION MATRIX
+    # ------------------------------------------------
+
+
+            # TODO: THIS IS A VERY BIG TODO
+
+
+
+
+    
+    # Define the residual function for the Least squares
     def residual(K):
         global Qx, Qy
 
         # We create the constants for both axis
-        Sx, Cx, Qx = createSystem(K, BETX, MUX, ALPX, delta0_x, axis = 'X')
-        Sy, Cy, Qy = createSystem(K, BETY, MUY, ALPY, delta0_y, axis = 'Y')
+        Sx, Cx = createSystem(K, intBETX, MUX, delta0_x, axis = 'X')
+        Sy, Cy = createSystem(K, intBETY, MUY, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L, _ = createSystem(K[:N], BETX_L, MUX_L, ALPX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L, _ = createSystem(K[:N], BETY_L, MUY_L, ALPY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L = createSystem(K[:N], intBETX_L, MUX_L, delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = createSystem(K[:N], intBETY_L, MUY_L, delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R, _ = createSystem(K[-N:], BETX_R, MUX_R, ALPX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R, _ = createSystem(K[-N:], BETY_R, MUY_R, ALPY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R = createSystem(K[-N:], intBETX_R, MUX_R, delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = createSystem(K[-N:], intBETY_R, MUY_R, delta0_y_R, axis = 'Y') 
         
         # Return the residual
         # return np.array([Sx, Cx, -Sy, -Cy]) - RHS
@@ -267,15 +287,6 @@ if __name__ == '__main__':
     """ CALCULATE THE ERRORS STIMATIONS """
     ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-15).x
    
-    # --> PRINT Q MATRICES TO CHECK VALIDITY OF GENERAL FORMULATION
-    # print("-"*30, "\n   Q matrices of the system")
-    # with np.printoptions(precision=1, suppress=True):
-    #     print("---> Para X:")
-    #     print(Qx)
-    #     print("---> Para Y:")
-    #     print(Qy)
-
-
     print("="*25)
     print("\nErrors estimation: \n")
     
