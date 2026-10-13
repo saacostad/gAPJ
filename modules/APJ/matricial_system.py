@@ -41,7 +41,7 @@ def get_beta_function(_sign, sign_K, KK, beta0, alfa0):
 
 
 # TODO: here is where we'll change the integrals
-def CreateM(B, P, A, K, sign):
+def CreateM(B, P, A, K, L, sign):
     """ We'll create the M propagation matrix.
     -- Inputs:
     B: NOMINAL ENTRANCE beta functions of the correction quadrupoles
@@ -61,15 +61,37 @@ def CreateM(B, P, A, K, sign):
     #       Create auxiliary functions
     #-----------------------------------------  
 
-    # -- Create an array of the beta functions for every corrections quadrupole]
+    # -- Create an array of the beta and psi functions for every corrections quadrupole
     betas = list()
+    psis= list()
+
     for i in range(n):
-        betas.append(get_beta_function(  sign, np.sign(K[i]), np.abs(K[i]), B[i], A[i]  ))
+        beta_func = get_beta_function(  sign, np.sign(K[i]), np.abs(K[i]), B[i], A[i]  )
+        betas.append(beta_func)      # Create beta function
+
+        # Create psi function
+        def make_psi(i, beta):
+            def psi(s):
+                return P[i] + quad(lambda x: 1 / beta(x), 0, s)[0] 
+
+            return psi
+
+        psis.append(make_psi(i, beta_func))
+
+    # DEBUG: so far, it seems that the beta and psi functions work perfectly
+    # print("CHECK") 
+    # print(L[0])
+    # print(B[0])
+    # print(P[0] / (2. * np.pi))
+    # print(betas[0](0), betas[0](1.3300000000017462))
+    # print(psis[0](0) / (2. * np.pi), psis[0](1.3300000000017462) / (2. * np.pi))
+    # print([psis[i](0) / (2* np.pi) for i in range(len(psis))])
+
 
 
     # TODO: list 
-    # 1. Check if the beta functions I'm generating are right
-    # 2. Create a phase advanced function psi(s) = psi_0 + int_0^s 1/beta(s) ds 
+    # 1. -- Check if the beta functions I'm generating are right
+    # -- 2. Create a phase advanced function psi(s) = psi_0 + int_0^s 1/beta(s) ds 
     # 3. Create the integrans: 4 in total, as seen in my chalkboard
     # 4. Create the integrals
     # 5. With that, M shall be done. 

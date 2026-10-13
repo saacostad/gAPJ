@@ -9,7 +9,7 @@ from scipy.optimize import least_squares
 
 # The math package for calculation
 from modules.APJ.matricial_system import createSystem_base2 as createSystem   # This is the left hand side of the equation
-from modules.APJ.matricial_system import createM
+from modules.APJ.matricial_system import CreateM as createM   # This is the left hand side of the equation
 
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
@@ -258,8 +258,8 @@ if __name__ == '__main__':
 
 
             # TODO: THIS IS A VERY BIG TODO
-
-
+    print("BEFORE CHECK: ", MUX / (2. * np.pi))
+    M = createM(BETX, MUX, ALPX, Knom, L, 1)
 
 
     

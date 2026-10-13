@@ -4,12 +4,12 @@ python_exec=python					# Ejecutable de python
 
 
 # FCC config
-#config_file=configuration_fcc_old_BK.toml
-#ip=ip.2
+config_file=configuration_fcc_old_BK.toml
+ip=ip.2
 
 # LHC config
-config_file=configuration.toml
-ip=ip1
+#config_file=configuration.toml
+#ip=ip1
 
 # ---------------------------------------
 # -- CREACIÓN DE LOS ARCHIVOS NOMINALES
