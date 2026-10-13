@@ -256,26 +256,33 @@ if __name__ == '__main__':
     #   CREATION OF THE NOMINAL PROPAGATION MATRIX
     # ------------------------------------------------
 
+    Mx = createM(BETX, MUX, ALPX, Knom, L, 1)
+    My = createM(BETY, MUY, ALPY, Knom, L, -1)
 
-            # TODO: THIS IS A VERY BIG TODO
-    print("BEFORE CHECK: ", MUX / (2. * np.pi))
-    M = createM(BETX, MUX, ALPX, Knom, L, 1)
+    Mx_L = createM(BETX_L, MUX_L, ALPX_L, Knom_L, L[:N], 1)
+    My_L = createM(BETY_L, MUY_L, ALPY_L, Knom_L, L[:N], -1)
 
-
+    Mx_R = createM(BETX_R, MUX_R, ALPX_R, Knom_R, L[-N:], 1)
+    My_R = createM(BETY_R, MUY_R, ALPY_R, Knom_R, L[-N:], -1)
     
+
+    # ------------------------------------------------
+    #   SOLUTION OF THE SYSTEM
+    # ------------------------------------------------
+
     # Define the residual function for the Least squares
     def residual(K):
         global Qx, Qy
 
         # We create the constants for both axis
-        Sx, Cx = createSystem(K, intBETX, MUX, delta0_x, axis = 'X')
-        Sy, Cy = createSystem(K, intBETY, MUY, delta0_y, axis = 'Y')
+        Sx, Cx = createSystem(Mx, K, intBETX, MUX, delta0_x, axis = 'X')
+        Sy, Cy = createSystem(My, K, intBETY, MUY, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L = createSystem(K[:N], intBETX_L, MUX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L = createSystem(K[:N], intBETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L = createSystem(Mx_L, K[:N], intBETX_L, MUX_L, delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = createSystem(My_L, K[:N], intBETY_L, MUY_L, delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R = createSystem(K[-N:], intBETX_R, MUX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R = createSystem(K[-N:], intBETY_R, MUY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R = createSystem(Mx_R, K[-N:], intBETX_R, MUX_R, delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = createSystem(My_R, K[-N:], intBETY_R, MUY_R, delta0_y_R, axis = 'Y') 
         
         # Return the residual
         # return np.array([Sx, Cx, -Sy, -Cy]) - RHS

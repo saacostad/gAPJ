@@ -54,7 +54,7 @@ def CreateM(B, P, A, K, L, sign):
     # -- Prepare the matrix
     n = len(P)  # Number of Quadrupoles
     hatM = np.zeros((n, n))    # Create a square matrix first
-    i, j = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
+    ii, jj = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
     
 
     #-----------------------------------------  
@@ -78,28 +78,43 @@ def CreateM(B, P, A, K, L, sign):
 
         psis.append(make_psi(i, beta_func))
 
-    # DEBUG: so far, it seems that the beta and psi functions work perfectly
-    # print("CHECK") 
-    # print(L[0])
-    # print(B[0])
-    # print(P[0] / (2. * np.pi))
-    # print(betas[0](0), betas[0](1.3300000000017462))
-    # print(psis[0](0) / (2. * np.pi), psis[0](1.3300000000017462) / (2. * np.pi))
-    # print([psis[i](0) / (2* np.pi) for i in range(len(psis))])
-
-
-
-    # TODO: list 
-    # 1. -- Check if the beta functions I'm generating are right
-    # -- 2. Create a phase advanced function psi(s) = psi_0 + int_0^s 1/beta(s) ds 
-    # 3. Create the integrans: 4 in total, as seen in my chalkboard
-    # 4. Create the integrals
-    # 5. With that, M shall be done. 
-    # 6. Change the code so createSystem takes the nominal M matrix instead of recalculating it each time
-
     
-    # hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
-    # return hatM
+    # -- We create the integrands 
+    def create_int_with_sin(beta, psi):
+
+        def integrand(s):
+            return np.sqrt(beta(s)) * np.sin(psi(s))
+
+        return integrand
+
+    def create_int_with_cos(beta, psi):
+
+        def integrand(s):
+            return np.sqrt(beta(s)) * np.cos(psi(s))
+
+        return integrand
+
+
+    # # -- Create a function that evaluates the M matrix components
+    # def evaluate_M_element(i, j):
+    #     return -quad(lambda s: create_int_with_cos(betas[i], psis[i])(s), 0, L[i])[0] * quad(lambda s: create_int_with_sin(betas[j], psis[j])(s), 0, L[j])[0]
+    #     + quad(lambda s: create_int_with_cos(betas[j], psis[j])(s), 0, L[j])[0] * quad(lambda s: create_int_with_sin(betas[i], psis[i])(s), 0, L[i])[0]
+   
+
+    # -- Create a function that evaluates the M matrix components
+    def evaluate_M_element(i, j):
+        return -np.sqrt(B[i])*np.cos(P[i])* quad(lambda s: create_int_with_sin(betas[j], psis[j])(s), 0, L[j])[0]
+        +quad(lambda s: create_int_with_cos(betas[j], psis[j])(s), 0, L[j])[0] * np.sqrt(B[i])*np.cos(P[i]) 
+
+    #-----------------------------------------  
+    #       CREATE THE MATRIX
+    #-----------------------------------------  
+
+    for i in ii:
+        for j in jj: 
+            hatM[i, j] = evaluate_M_element(i, j)    # Fill the gaps with what we need 
+
+    return hatM
 
 
 
@@ -162,7 +177,7 @@ def CreateQ(hatM, K, p, grad = 8):
 
     
 
-def CreateSystem(B, P, K, p = 1.0, grad = 8):
+def CreateSystem(hatM, B, P, K, p = 1.0, grad = 8):
     """
     This function takes the system's \\eta's, \\phi's and quadrupole magnetic errors \\Delta K
     and returns a tuple with the matrix \\hat Q, and the vectors \\vec u and \\vec v following that
@@ -175,7 +190,6 @@ def CreateSystem(B, P, K, p = 1.0, grad = 8):
 
     u = np.sqrt(B) * np.sin(P)
     v = np.sqrt(B) * np.cos(P)
-    hatM = CreateM(B, P, A, K, p)
 
     Q = CreateQ(hatM, K, p, grad)
 
@@ -211,7 +225,7 @@ def createFirstOrderMatrix(ux, vx, uy, vy):
 """
 HERE I'LL TRY TO CREATE THE SYSTEM WITH ONLY 2 BASES SIN(PSI) AND COS(PSI)
 """
-def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
+def createSystem_base2(M, Kerrors, Betas, Phis, delta0, axis, grad = 8):
     """ This function takes the Betas, Phis and errors (and the \\delta_0 value) and creates and evaluates
     the "Simulated" side of the system of equations.
 
@@ -223,7 +237,7 @@ def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
     p = 1.0 if axis == 'X' else -1.0
 
     # Create the matricial system
-    Q, u, v = CreateSystem(Betas, Phis, Kerrors, p, grad)
+    Q, u, v = CreateSystem(M, Betas, Phis, Kerrors, p, grad)
 
     # Create the big constants
     vQu, vQv, uQu, uQv = CreateConstants(Q, u, v)
