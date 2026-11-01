@@ -80,8 +80,8 @@ def CreatePropagationElements(B, P, A, K, L, sign):
     # CREATE THE U AND V VECTORS
     # _______________________________________
 
-    u = [np.sin(P[i]) * int_betas[i] / np.sqrt((L[i] * B[i])) for i in range(len(B))]
-    v = [np.cos(P[i]) * int_betas[i] / np.sqrt((L[i] * B[i])) for i in range(len(B))] 
+    u = [np.sin(P[i]) * int_betas[i] / np.sqrt(L[i] * B[i]) for i in range(len(B))]
+    v = [np.cos(P[i]) * int_betas[i] / np.sqrt(L[i] * B[i]) for i in range(len(B))] 
     
 
 
