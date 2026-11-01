@@ -8,8 +8,8 @@ import pandas as pd
 from scipy.optimize import least_squares
 
 # The math package for calculation
-from modules.APJ.matricial_system import createSystem_base2 as createSystem   # This is the left hand side of the equation
-from modules.APJ.matricial_system import CreateM as createM   # This is the left hand side of the equation
+from modules.APJ.matricial_system import createSystem_base2 as evaluateSystem   # This is the left hand side of the equation
+from modules.APJ.matricial_system import CreatePropagationElements as createPropagationElements   # This is the left hand side of the equation
 
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     BETX = latticeDF['BETX'].to_numpy()         # Nominal entrance beta functions
     BETY = latticeDF['BETY'].to_numpy()
     
-    intBETX = latticeDF['IBX'].to_numpy()       # Integrals of the beta functions
+    intBETX = latticeDF['IBX'].to_numpy()       # Integrals of the beta functions. WARN: do I really need this, specially when I slice the QPs?
     intBETY = latticeDF['IBY'].to_numpy()
     
     MUX = latticeDF['MUX'].to_numpy()           # Phase advance on the entrance
@@ -239,7 +239,10 @@ if __name__ == '__main__':
     
     ALPX = latticeDF['ALFX'].to_numpy()         # Alfa on the entrance
     ALPY = latticeDF['ALFY'].to_numpy()
+
     
+    # TODO: create a function that does this by its own
+
     # -- Here we separate this data on the left and right side of the IR 
     Knom_L, Knom_R = Knom[:N], Knom[-N:]
     BETX_L, BETX_R = BETX[:N], BETX[-N:]
@@ -256,14 +259,14 @@ if __name__ == '__main__':
     #   CREATION OF THE NOMINAL PROPAGATION MATRIX
     # ------------------------------------------------
 
-    Mx = createM(BETX, MUX, ALPX, Knom, L, 1)
-    My = createM(BETY, MUY, ALPY, Knom, L, -1)
+    Mx = createPropagationElements(BETX, MUX, ALPX, Knom, L, 1)
+    My = createPropagationElements(BETY, MUY, ALPY, Knom, L, -1)
 
-    Mx_L = createM(BETX_L, MUX_L, ALPX_L, Knom_L, L[:N], 1)
-    My_L = createM(BETY_L, MUY_L, ALPY_L, Knom_L, L[:N], -1)
+    Mx_L = createPropagationElements(BETX_L, MUX_L, ALPX_L, Knom_L, L[:N], 1)
+    My_L = createPropagationElements(BETY_L, MUY_L, ALPY_L, Knom_L, L[:N], -1)
 
-    Mx_R = createM(BETX_R, MUX_R, ALPX_R, Knom_R, L[-N:], 1)
-    My_R = createM(BETY_R, MUY_R, ALPY_R, Knom_R, L[-N:], -1)
+    Mx_R = createPropagationElements(BETX_R, MUX_R, ALPX_R, Knom_R, L[-N:], 1)
+    My_R = createPropagationElements(BETY_R, MUY_R, ALPY_R, Knom_R, L[-N:], -1)
     
 
     # ------------------------------------------------
@@ -275,17 +278,16 @@ if __name__ == '__main__':
         global Qx, Qy
 
         # We create the constants for both axis
-        Sx, Cx = createSystem(Mx, K, intBETX, MUX, delta0_x, axis = 'X')
-        Sy, Cy = createSystem(My, K, intBETY, MUY, delta0_y, axis = 'Y')
+        Sx, Cx = evaluateSystem(Mx, K, intBETX, MUX, delta0_x, axis = 'X')
+        Sy, Cy = evaluateSystem(My, K, intBETY, MUY, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L = createSystem(Mx_L, K[:N], intBETX_L, MUX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L = createSystem(My_L, K[:N], intBETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L = evaluateSystem(Mx_L, K[:N], intBETX_L, MUX_L, delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = evaluateSystem(My_L, K[:N], intBETY_L, MUY_L, delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R = createSystem(Mx_R, K[-N:], intBETX_R, MUX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R = createSystem(My_R, K[-N:], intBETY_R, MUY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R = evaluateSystem(Mx_R, K[-N:], intBETX_R, MUX_R, delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = evaluateSystem(My_R, K[-N:], intBETY_R, MUY_R, delta0_y_R, axis = 'Y') 
         
         # Return the residual
-        # return np.array([Sx, Cx, -Sy, -Cy]) - RHS
         return np.array([Sx, Cx, -Sy, -Cy, Sx_L, Cx_L, -Sy_L, -Cy_L, Sx_R, Cx_R, -Sy_R, -Cy_R]) - np.concatenate((RHS, RHS_L, RHS_R))
 
 
@@ -298,7 +300,6 @@ if __name__ == '__main__':
     print("\nErrors estimation: \n")
     
     for i in range(len(ERR_estimations)):
-        # print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g} \t\t residue of {residual(ERR_estimations)[i]:.2g}")
         print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g}")
 
     # Write to the file
