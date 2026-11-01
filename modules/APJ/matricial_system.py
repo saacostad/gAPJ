@@ -6,7 +6,7 @@ according to the general model
 import numpy as np 
 from scipy.integrate import quad
 
-# TODO: would be better to import the function or to do something with the beta function
+
 def get_lattice_functions(_sign, sign_K, KK, beta0, alfa0, psi0):
     """ This function returns a ready-to-use function representing beta(s) and psi(s) inside of a quadrupole.
     It takes the sign (direction of the beam * plane * charge of the particle, either -1 or 1 depending on the convention used),
@@ -38,7 +38,7 @@ def get_lattice_functions(_sign, sign_K, KK, beta0, alfa0, psi0):
             cosh = np.cosh(ks)
             return beta0*cosh**2 - 2.*alfa0*(sinh*cosh/K) + ((1.+alfa0**2)/beta0)*(sinh**2)/KK
     
-
+    # Psi only depends on the beta function, let it be focusing or defocusing case
     def psi(s):
         return psi0 + quad(lambda x: 1. / beta(x), 0, s)[0]
 
@@ -50,7 +50,7 @@ def get_lattice_functions(_sign, sign_K, KK, beta0, alfa0, psi0):
 
 
 # TODO: here is where we'll change the integrals
-def createPropagationElements(B, P, A, K, L, sign):
+def CreatePropagationElements(B, P, A, K, L, sign):
     """ We'll create the M propagation matrix and the u and v propagation vectors elements.
     -- Inputs:
     B: NOMINAL ENTRANCE beta functions of the correction quadrupoles
@@ -59,17 +59,50 @@ def createPropagationElements(B, P, A, K, L, sign):
     K: Same but the quadrupole gradient strength
     sign: Sign for wheter we are focusing or defocusing (beams direction * axis)
     """
+
+    # CREATE THE LATTICE FUNCTIONS
+    # _______________________________________
+
+    # Create a list for the functions
+    betas = list()
+    psis = list()                       # HACK: psis is gonna be use in the case we slice the quadrupoles
+    int_betas = list()                  # Create a list for the beta integrals which we'll be using
+    for i in range(len(B)):
+        # Retreive the respective functions
+        beta, psi = get_lattice_functions(sign, np.sign(K[i]), np.abs(K[i]), B[i], A[i], P[i])
+        int_beta = quad(beta, 0, L[i])[0]
+
+        betas.append(beta)
+        psis.append(psi)
+        int_betas.append(int_beta)
     
+
+    # CREATE THE U AND V VECTORS
+    # _______________________________________
+
+    u = [np.sin(P[i]) * int_betas[i] / np.sqrt((L[i] * B[i])) for i in range(len(B))]
+    v = [np.cos(P[i]) * int_betas[i] / np.sqrt((L[i] * B[i])) for i in range(len(B))] 
+    
+
+
+    # CREATE THE PROPAGATION MATRIX
+    # _______________________________________   
+
     # -- Prepare the matrix
     n = len(P)  # Number of Quadrupoles
     hatM = np.zeros((n, n))    # Create a square matrix first
     ii, jj = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
 
+
+    # -- Create the M element evaluator function
+    def evaluate_M_element(i, j):
+        return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i]) * np.sqrt(1. / L[i])
+
     for i in ii:
         for j in jj: 
             hatM[i, j] = evaluate_M_element(i, j)    # Fill the gaps with what we need 
 
-    return hatM
+    return hatM, u, v
 
 
 

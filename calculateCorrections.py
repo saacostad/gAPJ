@@ -214,25 +214,27 @@ if __name__ == '__main__':
     # First, we get the right hand side vector of the system 
     RHS, delta0_x, delta0_y = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath)
 
-    # TODO: make this optional in case we only want arcs analysis
     RHS_L, delta0_x_L, delta0_y_L = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath, where = "left")
     RHS_R, delta0_x_R, delta0_y_R = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath, where = "right")
 
     print("  -> Creating LHS of system of equations")
     print(f"  \\__ Getting correction quadrupoles optical parameters from {integrals_path}")
 
-    # In order to create the left hand side, we need to retreive the lattice functions of the quadrupoles of interest
+
+
+    # GET THE WHOLE DATA OF THE ELEMENTS
+    # -----------------------------------
     latticeDF = get_quadrupoles_lattice_functions(integrals_path, QUADRUPOLES_SELECTION)
 
-    # We will now create simple lists of the lattice functions for easier access
+
+
+    # RETREIVE THE DATA OF THE GENERAL SYSTEM
+    # ----------------------------------------
     Knom = latticeDF['K'].to_numpy()            # Nominal quadrupole strengths
     L = latticeDF['L'].to_numpy()               # Length of the quadrupole (so we know where to integrate)
 
     BETX = latticeDF['BETX'].to_numpy()         # Nominal entrance beta functions
     BETY = latticeDF['BETY'].to_numpy()
-    
-    intBETX = latticeDF['IBX'].to_numpy()       # Integrals of the beta functions. WARN: do I really need this, specially when I slice the QPs?
-    intBETY = latticeDF['IBY'].to_numpy()
     
     MUX = latticeDF['MUX'].to_numpy()           # Phase advance on the entrance
     MUY = latticeDF['MUY'].to_numpy()
@@ -240,34 +242,31 @@ if __name__ == '__main__':
     ALPX = latticeDF['ALFX'].to_numpy()         # Alfa on the entrance
     ALPY = latticeDF['ALFY'].to_numpy()
 
-    
-    # TODO: create a function that does this by its own
+    # CREATION OF THE NOMINAL PROPAGATION SYSTEM
+    # -------------------------------------------
+    Mx, ux, vx = createPropagationElements(BETX, MUX, ALPX, Knom, L, 1)
+    My, uy, vy = createPropagationElements(BETY, MUY, ALPY, Knom, L, -1)
+  
 
+
+    # DO THE SAME BUT FOR THE LEFT AND RIGHT SIDE OF THE IP
+    # -------------------------------------------
     # -- Here we separate this data on the left and right side of the IR 
     Knom_L, Knom_R = Knom[:N], Knom[-N:]
     BETX_L, BETX_R = BETX[:N], BETX[-N:]
     BETY_L, BETY_R = BETY[:N], BETY[-N:]
-    intBETX_L, intBETX_R = intBETX[:N], intBETX[-N:]
-    intBETY_L, intBETY_R = intBETY[:N], intBETY[-N:]
     MUX_L, MUX_R = MUX[:N], MUX[-N:]
-    MUY_L, MUY_R = MUY[:N], MUY[-N:]    # We'll create the residual function to use with Least_Squares()
+    MUY_L, MUY_R = MUY[:N], MUY[-N:]   
     ALPX_L, ALPX_R = ALPX[:N], ALPX[-N:]
     ALPY_L, ALPY_R = ALPY[:N], ALPY[-N:]
 
+    Mx_L, ux_L, vx_L = createPropagationElements(BETX_L, MUX_L, ALPX_L, Knom_L, L[:N], 1)
+    My_L, uy_L, vy_L = createPropagationElements(BETY_L, MUY_L, ALPY_L, Knom_L, L[:N], -1)
 
-    # ------------------------------------------------
-    #   CREATION OF THE NOMINAL PROPAGATION MATRIX
-    # ------------------------------------------------
+    Mx_R, ux_R, vx_R = createPropagationElements(BETX_R, MUX_R, ALPX_R, Knom_R, L[-N:], 1)
+    My_R, uy_R, vy_R = createPropagationElements(BETY_R, MUY_R, ALPY_R, Knom_R, L[-N:], -1)
+   
 
-    Mx = createPropagationElements(BETX, MUX, ALPX, Knom, L, 1)
-    My = createPropagationElements(BETY, MUY, ALPY, Knom, L, -1)
-
-    Mx_L = createPropagationElements(BETX_L, MUX_L, ALPX_L, Knom_L, L[:N], 1)
-    My_L = createPropagationElements(BETY_L, MUY_L, ALPY_L, Knom_L, L[:N], -1)
-
-    Mx_R = createPropagationElements(BETX_R, MUX_R, ALPX_R, Knom_R, L[-N:], 1)
-    My_R = createPropagationElements(BETY_R, MUY_R, ALPY_R, Knom_R, L[-N:], -1)
-    
 
     # ------------------------------------------------
     #   SOLUTION OF THE SYSTEM
@@ -278,14 +277,14 @@ if __name__ == '__main__':
         global Qx, Qy
 
         # We create the constants for both axis
-        Sx, Cx = evaluateSystem(Mx, K, intBETX, MUX, delta0_x, axis = 'X')
-        Sy, Cy = evaluateSystem(My, K, intBETY, MUY, delta0_y, axis = 'Y')
+        Sx, Cx = evaluateSystem(Mx, ux, vx, K, delta0_x, axis = 'X')
+        Sy, Cy = evaluateSystem(My, uy, vy, K, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L = evaluateSystem(Mx_L, K[:N], intBETX_L, MUX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L = evaluateSystem(My_L, K[:N], intBETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L = evaluateSystem(Mx_L, ux_L, vx_L, K[:N], delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = evaluateSystem(My_L, uy_L, vy_L, K[:N], delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R = evaluateSystem(Mx_R, K[-N:], intBETX_R, MUX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R = evaluateSystem(My_R, K[-N:], intBETY_R, MUY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R = evaluateSystem(Mx_R, ux_R, vx_R, K[-N:], delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = evaluateSystem(My_R, uy_R, vy_R, K[-N:], delta0_y_R, axis = 'Y') 
         
         # Return the residual
         return np.array([Sx, Cx, -Sy, -Cy, Sx_L, Cx_L, -Sy_L, -Cy_L, Sx_R, Cx_R, -Sy_R, -Cy_R]) - np.concatenate((RHS, RHS_L, RHS_R))
@@ -307,6 +306,8 @@ if __name__ == '__main__':
     err_dict = dict(zip(QUADRUPOLES_SELECTION, ERR_estimations))
     
     print(f"\n  -> Writting errors + corrections to {cors_config["modifications_path"]}")
+    
+    # TODO: improve this writting process so it is clearer
 
     # Read and modify file
     with open(cors_config["modifications_path"], "r") as f:
