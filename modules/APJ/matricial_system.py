@@ -80,9 +80,9 @@ def CreatePropagationElements(B, P, A, K, L, sign):
     # CREATE THE U AND V VECTORS
     # _______________________________________
 
-    u = [np.sin(P[i]) * int_betas[i] / np.sqrt(L[i] * B[i]) for i in range(len(B))]
-    v = [np.cos(P[i]) * int_betas[i] / np.sqrt(L[i] * B[i]) for i in range(len(B))] 
-    
+    temp_r = int_betas / np.sqrt(B)         # Common term for the propagation vectors 
+    u = np.sin(P) * temp_r
+    v = np.cos(P) * temp_r
 
 
     # CREATE THE PROPAGATION MATRIX
@@ -96,7 +96,7 @@ def CreatePropagationElements(B, P, A, K, L, sign):
 
     # -- Create the M element evaluator function
     def evaluate_M_element(i, j):
-        return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i]) * np.sqrt(1. / L[i])
+        return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i])
 
     for i in ii:
         for j in jj: 

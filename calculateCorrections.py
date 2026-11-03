@@ -293,8 +293,8 @@ if __name__ == '__main__':
     print("\nSolving the system...")
 
     """ CALCULATE THE ERRORS STIMATIONS """
-    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-15).x
-   
+    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-15).x    
+
     print("="*25)
     print("\nErrors estimation: \n")
     
