@@ -81,6 +81,7 @@ def CreatePropagationElements(B, P, A, K, L, sign):
     # _______________________________________
 
     temp_r = int_betas / np.sqrt(B)         # Common term for the propagation vectors 
+    temp_r = np.sqrt(int_betas)
     u = np.sin(P) * temp_r
     v = np.cos(P) * temp_r
 
@@ -96,7 +97,9 @@ def CreatePropagationElements(B, P, A, K, L, sign):
 
     # -- Create the M element evaluator function
     def evaluate_M_element(i, j):
-        return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i])
+        # return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i])
+        return np.sqrt(int_betas[i] * int_betas[j]) * np.sin(P[j] - P[i])
+
 
     for i in ii:
         for j in jj: 
