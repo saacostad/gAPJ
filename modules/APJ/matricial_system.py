@@ -163,5 +163,5 @@ def createSystem_base2(M, u, v, Kerrors, delta0, axis):
     # Here, we create then z_0^* = z_0 / √2J = √β(s) sin(psi(s) - δ) 
     z_star = np.cos(delta0)*u[1] - np.sin(delta0)*v[1]
     
-    return -u[0]@Q@z_star, v[0]@Q@z_star
+    return v[0]@Q@z_star, -u[0]@Q@z_star
     
