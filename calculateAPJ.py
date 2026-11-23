@@ -4,7 +4,6 @@ TODO: I'm planning to add a Xtrack output file parser too
 """
 
 import tfs as tfs    # To read the twiss files
-from turn_by_turn.trackone import read_tbt  # To read the trackone
 import pandas as pd     # To get rid of the tfs that are ugly
 
 # These two always go
