@@ -81,9 +81,10 @@ def CreatePropagationElements(B, P, A, K, L, sign):
     # _______________________________________
 
     temp_r = int_betas / np.sqrt(B)         # Common term for the propagation vectors 
-    temp_r = np.sqrt(int_betas)
-    u = np.sin(P) * temp_r
-    v = np.cos(P) * temp_r
+
+    # temp_r = np.sqrt(int_betas)                 #MACHETAZO
+    u = np.array([np.sin(P) * temp_r, np.sin(P) * np.sqrt(B)])
+    v = np.array([np.cos(P) * temp_r, np.cos(P) * np.sqrt(B)]) 
 
 
     # CREATE THE PROPAGATION MATRIX
@@ -97,9 +98,8 @@ def CreatePropagationElements(B, P, A, K, L, sign):
 
     # -- Create the M element evaluator function
     def evaluate_M_element(i, j):
-        # return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i])
-        return np.sqrt(int_betas[i] * int_betas[j]) * np.sin(P[j] - P[i])
-
+        return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i])
+        # return np.sqrt(int_betas[i] * int_betas[j]) * np.sin(P[j] - P[i])     # MACHETAZO
 
     for i in ii:
         for j in jj: 
@@ -142,20 +142,6 @@ def CreateQ(hatM, K, p):
 
     
 
-def CreateConstants(Q, u, v):
-    """
-    This function takes the system vectors/matrices and calculates the coefficients 
-    of the expansion we care about. Returns a tuple with 
-
-    \\vec v^T \\hat Q \\vec u
-    \\vec v^T \\hat Q \\vec v
-    \\vec v^u \\hat Q \\vec u
-    \\vec v^u \\hat Q \\vec v
-    """
-
-    return v @ Q @ u, v @ Q @ v, u @ Q @ u, u @ Q @ v
-
-
 """
 MAIN FUNCTION TO CREATE THE SYSTEM
 """
@@ -170,18 +156,12 @@ def createSystem_base2(M, u, v, Kerrors, delta0, axis):
 
     p = 1.0 if axis == 'X' else -1.0
 
-    # Create the matricial system
+    # Create the matricial system 
     Q = CreateQ(M, Kerrors, p)
-
-    # Create the big constants
-    vQu, vQv, uQu, uQv = CreateConstants(Q, u, v)
-
-    # The cos(\delta_0) for the calculations
-    cosd = np.cos(delta0)
-    sind = np.sin(delta0)
+    # NOTE: it is already operated by 𝚫K
     
-    # Return the two cosntants
-    return cosd*vQu - sind*vQv, -cosd*uQu + sind*uQv
-
+    # Here, we create then z_0^* = z_0 / √2J = √β(s) sin(psi(s) - δ) 
+    z_star = np.cos(delta0)*u[1] - np.sin(delta0)*v[1]
     
+    return -u[0]@Q@z_star, v[0]@Q@z_star
     
