@@ -69,8 +69,11 @@ def calculate_integrals(twiss, beam_params):
             "BETY": row.BETY,
             "MUX": row.MUX,
             "MUY": row.MUY,
+            "ALFX": row.ALFX,
+            "ALFY": row.ALFY,
             "IBX": integralx,
             "IBY": integraly,
+            "K": row.K1,
             "L": row.L
             })
 

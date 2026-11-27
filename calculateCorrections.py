@@ -8,7 +8,8 @@ import pandas as pd
 from scipy.optimize import least_squares
 
 # The math package for calculation
-from modules.APJ.matricial_system import createSystem_base2 as createSystem   # This is the left hand side of the equation
+from modules.APJ.matricial_system import createSystem_base2 as evaluateSystem   # This is the left hand side of the equation
+from modules.APJ.matricial_system import CreatePropagationElements as createPropagationElements   # This is the left hand side of the equation
 
 # Packages for command input
 import argparse                 # Will be used mainly to select if we're creating nominal, errors or errors+corrections systems
@@ -213,70 +214,91 @@ if __name__ == '__main__':
     # First, we get the right hand side vector of the system 
     RHS, delta0_x, delta0_y = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath)
 
-    # TODO: make this optional in case we only want arcs analysis
     RHS_L, delta0_x_L, delta0_y_L = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath, where = "left")
     RHS_R, delta0_x_R, delta0_y_R = get_observed_system(MUXpath, MUYpath, PHASEXpath, PHASEYpath, where = "right")
 
     print("  -> Creating LHS of system of equations")
     print(f"  \\__ Getting correction quadrupoles optical parameters from {integrals_path}")
 
-    # In order to create the left hand side, we need to retreive the lattice functions of the quadrupoles of interest
+
+
+    # GET THE WHOLE DATA OF THE ELEMENTS
+    # -----------------------------------
     latticeDF = get_quadrupoles_lattice_functions(integrals_path, QUADRUPOLES_SELECTION)
 
-    # We will now create simple lists of the lattice functions for easier access
-    # TODO: make this so it takes a left/right quadrupoles vector 
-    BETX = latticeDF['IBX'].to_numpy()      # We're not using BETX/Y because we actually want the integrals of them
-    BETY = latticeDF['IBY'].to_numpy()
-    MUX = latticeDF['MUX'].to_numpy()
-    MUY = latticeDF['MUY'].to_numpy()
-    L = latticeDF['L'].to_numpy()
-    
-    
 
+
+    # RETREIVE THE DATA OF THE GENERAL SYSTEM
+    # ----------------------------------------
+    Knom = latticeDF['K'].to_numpy()            # Nominal quadrupole strengths
+    L = latticeDF['L'].to_numpy()               # Length of the quadrupole (so we know where to integrate)
+
+    BETX = latticeDF['BETX'].to_numpy()         # Nominal entrance beta functions
+    BETY = latticeDF['BETY'].to_numpy()
+    
+    MUX = latticeDF['MUX'].to_numpy()           # Phase advance on the entrance
+    MUY = latticeDF['MUY'].to_numpy()
+    
+    ALPX = latticeDF['ALFX'].to_numpy()         # Alfa on the entrance
+    ALPY = latticeDF['ALFY'].to_numpy()
+
+    # CREATION OF THE NOMINAL PROPAGATION SYSTEM
+    # -------------------------------------------
+    Mx, ux, vx = createPropagationElements(BETX, MUX, ALPX, Knom, L, 1)
+    My, uy, vy = createPropagationElements(BETY, MUY, ALPY, Knom, L, -1)
+  
+
+
+    # DO THE SAME BUT FOR THE LEFT AND RIGHT SIDE OF THE IP
+    # -------------------------------------------
+    # -- Here we separate this data on the left and right side of the IR 
+    Knom_L, Knom_R = Knom[:N], Knom[-N:]
     BETX_L, BETX_R = BETX[:N], BETX[-N:]
     BETY_L, BETY_R = BETY[:N], BETY[-N:]
     MUX_L, MUX_R = MUX[:N], MUX[-N:]
-    MUY_L, MUY_R = MUY[:N], MUY[-N:]    # We'll create the residual function to use with Least_Squares()
-    
-    save_Q = True
+    MUY_L, MUY_R = MUY[:N], MUY[-N:]   
+    ALPX_L, ALPX_R = ALPX[:N], ALPX[-N:]
+    ALPY_L, ALPY_R = ALPY[:N], ALPY[-N:]
 
+    Mx_L, ux_L, vx_L = createPropagationElements(BETX_L, MUX_L, ALPX_L, Knom_L, L[:N], 1)
+    My_L, uy_L, vy_L = createPropagationElements(BETY_L, MUY_L, ALPY_L, Knom_L, L[:N], -1)
+
+    Mx_R, ux_R, vx_R = createPropagationElements(BETX_R, MUX_R, ALPX_R, Knom_R, L[-N:], 1)
+    My_R, uy_R, vy_R = createPropagationElements(BETY_R, MUY_R, ALPY_R, Knom_R, L[-N:], -1)
+   
+
+
+    # ------------------------------------------------
+    #   SOLUTION OF THE SYSTEM
+    # ------------------------------------------------
+
+    # Define the residual function for the Least squares
     def residual(K):
         global Qx, Qy
 
         # We create the constants for both axis
-        Sx, Cx, Qx = createSystem(K, BETX, MUX, delta0_x, axis = 'X')
-        Sy, Cy, Qy = createSystem(K, BETY, MUY, delta0_y, axis = 'Y')
+        Sx, Cx = evaluateSystem(Mx, ux, vx, K, delta0_x, axis = 'X')
+        Sy, Cy = evaluateSystem(My, uy, vy, K, delta0_y, axis = 'Y')
 
-        Sx_L, Cx_L, _ = createSystem(K[:N], BETX_L, MUX_L, delta0_x_L, axis = 'X')
-        Sy_L, Cy_L, _ = createSystem(K[:N], BETY_L, MUY_L, delta0_y_L, axis = 'Y')
+        Sx_L, Cx_L = evaluateSystem(Mx_L, ux_L, vx_L, K[:N], delta0_x_L, axis = 'X')
+        Sy_L, Cy_L = evaluateSystem(My_L, uy_L, vy_L, K[:N], delta0_y_L, axis = 'Y')
         
-        Sx_R, Cx_R, _ = createSystem(K[-N:], BETX_R, MUX_R, delta0_x_R, axis = 'X')
-        Sy_R, Cy_R, _ = createSystem(K[-N:], BETY_R, MUY_R, delta0_y_R, axis = 'Y') 
+        Sx_R, Cx_R = evaluateSystem(Mx_R, ux_R, vx_R, K[-N:], delta0_x_R, axis = 'X')
+        Sy_R, Cy_R = evaluateSystem(My_R, uy_R, vy_R, K[-N:], delta0_y_R, axis = 'Y') 
         
         # Return the residual
-        # return np.array([Sx, Cx, -Sy, -Cy]) - RHS
         return np.array([Sx, Cx, -Sy, -Cy, Sx_L, Cx_L, -Sy_L, -Cy_L, Sx_R, Cx_R, -Sy_R, -Cy_R]) - np.concatenate((RHS, RHS_L, RHS_R))
 
 
     print("\nSolving the system...")
 
     """ CALCULATE THE ERRORS STIMATIONS """
-    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-15).x
-   
-    # --> PRINT Q MATRICES TO CHECK VALIDITY OF GENERAL FORMULATION
-    # print("-"*30, "\n   Q matrices of the system")
-    # with np.printoptions(precision=1, suppress=True):
-    #     print("---> Para X:")
-    #     print(Qx)
-    #     print("---> Para Y:")
-    #     print(Qy)
-
+    ERR_estimations = least_squares(residual, ERR_init, ftol = 1e-15).x 
 
     print("="*25)
     print("\nErrors estimation: \n")
     
     for i in range(len(ERR_estimations)):
-        # print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g} \t\t residue of {residual(ERR_estimations)[i]:.2g}")
         print(f"\t{QUADRUPOLES_SELECTION[i]}:  {ERR_estimations[i]:.2g}")
 
     # Write to the file
@@ -284,6 +306,8 @@ if __name__ == '__main__':
     err_dict = dict(zip(QUADRUPOLES_SELECTION, ERR_estimations))
     
     print(f"\n  -> Writting errors + corrections to {cors_config["modifications_path"]}")
+    
+    # TODO: improve this writting process so it is clearer
 
     # Read and modify file
     with open(cors_config["modifications_path"], "r") as f:

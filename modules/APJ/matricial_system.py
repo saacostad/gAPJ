@@ -4,46 +4,115 @@ according to the general model
 """
 
 import numpy as np 
+from scipy.integrate import quad
 
 
-def NeummanInverse(T, grad = 8):
-    """
-    This function creates the Neuman Truncated Inverse of
-
-    (1 - p\\hat M \\hat {\\Delta K})
-
-    according to the formula
-
-    (1 - p\\hat M \\hat {\\Delta K})^{-1} = sum_{k = 1}^{grad} (p \\hat M \\hat \\Delta K)^k 
-    """
-    n = T.shape[0]
-    I = np.eye(n, dtype=T.dtype)
+def get_lattice_functions(_sign, sign_K, KK, beta0, alfa0, psi0):
+    """ This function returns a ready-to-use function representing beta(s) and psi(s) inside of a quadrupole.
+    It takes the sign (direction of the beam * plane * charge of the particle, either -1 or 1 depending on the convention used),
+    the element's magnetic gradient K and entrance beta_0 and alfa_0 """
     
-    S = I.copy()
-    Tk = I.copy()
+    # In the case we get weird quadrupoles, just return 0
+    if KK == 0.0:
+        return lambda x: 0.0
+
+    K = np.sqrt(abs(KK))            # Helper variable
+    case = np.sign(_sign * sign_K)  # Get if we're focusing or defocusing
     
-    for _ in range(1, grad):
-        Tk = Tk @ T
-        S += Tk
-        
-    return S
+    beta = lambda x: None           # Create a function holder
+
+    # Focusing case 
+    if case > 0:
+
+        def beta(s):
+            ks = K*s 
+            sin = np.sin(ks)
+            cos = np.cos(ks)
+            return beta0*cos**2 - 2.*alfa0*(sin*cos/K) + ((1.+alfa0**2)/beta0)*(sin**2)/KK
+
+    else: 
+        # Defocusin case: change sin/cos for sinh/cosh
+        def beta(s):
+            ks = K*s 
+            sinh = np.sinh(ks)
+            cosh = np.cosh(ks)
+            return beta0*cosh**2 - 2.*alfa0*(sinh*cosh/K) + ((1.+alfa0**2)/beta0)*(sinh**2)/KK
+    
+    # Psi only depends on the beta function, let it be focusing or defocusing case
+    def psi(s):
+        return psi0 + quad(lambda x: 1. / beta(x), 0, s)[0]
+
+    
+    return beta, psi
 
 
-def CreateM(B, P):
-    # We create the matrix M 
-    #-------------------------------
 
+
+
+# TODO: here is where we'll change the integrals
+def CreatePropagationElements(B, P, A, K, L, sign):
+    """ We'll create the M propagation matrix and the u and v propagation vectors elements.
+    -- Inputs:
+    B: NOMINAL ENTRANCE beta functions of the correction quadrupoles
+    P: Same for Psi functions
+    A: Same but alpha
+    K: Same but the quadrupole gradient strength
+    sign: Sign for wheter we are focusing or defocusing (beams direction * axis)
+    """
+
+    # CREATE THE LATTICE FUNCTIONS
+    # _______________________________________
+
+    # Create a list for the functions
+    betas = list()
+    psis = list()                       # HACK: psis is gonna be use in the case we slice the quadrupoles
+    int_betas = list()                  # Create a list for the beta integrals which we'll be using
+    for i in range(len(B)):
+        # Retreive the respective functions
+        beta, psi = get_lattice_functions(sign, np.sign(K[i]), np.abs(K[i]), B[i], A[i], P[i])
+        int_beta = quad(beta, 0, L[i])[0]
+
+        betas.append(beta)
+        psis.append(psi)
+        int_betas.append(int_beta)
+    
+
+    # CREATE THE U AND V VECTORS
+    # _______________________________________
+
+    temp_r = int_betas / np.sqrt(B)         # Common term for the propagation vectors 
+
+    # temp_r = np.sqrt(int_betas)                 #MACHETAZO
+    u = np.array([np.sin(P) * temp_r, np.sin(P) * np.sqrt(B)])
+    v = np.array([np.cos(P) * temp_r, np.cos(P) * np.sqrt(B)]) 
+
+
+    # CREATE THE PROPAGATION MATRIX
+    # _______________________________________   
+
+    # -- Prepare the matrix
     n = len(P)  # Number of Quadrupoles
-    
     hatM = np.zeros((n, n))    # Create a square matrix first
+    ii, jj = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
 
-    i, j = np.tril_indices(n, k=-1) # Take only the indexes of the lower triangular section
-    
-    hatM[i, j] = np.sin(P[i] - P[j]) * np.sqrt(B[i] * B[j])    # Fill the gaps with what we need 
 
-    return hatM
+    # -- Create the M element evaluator function
+    def evaluate_M_element(i, j):
+        return np.sqrt(B[j] / B[i]) * int_betas[i] * np.sin(P[j] - P[i])
+        # return np.sqrt(int_betas[i] * int_betas[j]) * np.sin(P[j] - P[i])     # MACHETAZO
 
-def CreateQ(hatM, K, p, grad = 8):
+    for i in ii:
+        for j in jj: 
+            hatM[i, j] = evaluate_M_element(i, j)    # Fill the gaps with what we need 
+
+    return hatM, u, v
+
+
+
+
+
+
+def CreateQ(hatM, K, p):
     """
     This function creates the Q matrix given that 
 
@@ -67,66 +136,16 @@ def CreateQ(hatM, K, p, grad = 8):
     #---------------------------------------------------------------------------
     
     n = len(K) 
-    if grad == hatM.shape[0]:
-        Q = hatK @ np.linalg.inv(np.eye(n) - p * hatM @ hatK)
-    else:
-        # print("calculating inverse with Neumman")
-        Q = hatK @ NeummanInverse(p * hatM @ hatK, grad)
+    Q = hatK @ np.linalg.inv(np.eye(n) - p * hatM @ hatK)
 
     return Q
 
     
 
-def CreateSystem(B, P, K, p = 1.0, grad = 8):
-    """
-    This function takes the system's \\eta's, \\phi's and quadrupole magnetic errors \\Delta K
-    and returns a tuple with the matrix \\hat Q, and the vectors \\vec u and \\vec v following that
-
-    \\vec u = {\\sqrt(\\beta_i) \\sin(\\psi_i)}
-    \\vec v = {\\sqrt(\\beta_i) \\cos(\\psi_i)}
-
-    \\hat Q = \\hat{\\Delta K} ( 1 - p \\hat{M} \\hat{\\Delta K} )^{-1}
-    """
-
-    u = np.sqrt(B) * np.sin(P)
-    v = np.sqrt(B) * np.cos(P)
-    hatM = CreateM(B, P)
-
-    Q = CreateQ(hatM, K, p, grad)
-
-    return Q, u, v
-
-
-def CreateConstants(Q, u, v):
-    """
-    This function takes the system vectors/matrices and calculates the coefficients 
-    of the expansion we care about. Returns a tuple with 
-
-    \\vec v^T \\hat Q \\vec u
-    \\vec v^T \\hat Q \\vec v
-    \\vec v^u \\hat Q \\vec u
-    \\vec v^u \\hat Q \\vec v
-    """
-
-    return v @ Q @ u, v @ Q @ v, u @ Q @ u, u @ Q @ v
-
-
-def createFirstOrderMatrix(ux, vx, uy, vy):
-    """ This function creates the "first order matrix", that is, approximation the system to first order 
-    and writting \\hat G \\vec Delta k = \\vec a, \\hat G would be the first order matrix """
-    
-    rows = [ux * vx, vx * vx,ux * ux, ux * vx,
-            uy * vy, vy * vy,uy * uy, uy * vy,]
-
-    return np.array(rows)
-
-
-
-
 """
-HERE I'LL TRY TO CREATE THE SYSTEM WITH ONLY 2 BASES SIN(PSI) AND COS(PSI)
+MAIN FUNCTION TO CREATE THE SYSTEM
 """
-def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
+def createSystem_base2(M, u, v, Kerrors, delta0, axis):
     """ This function takes the Betas, Phis and errors (and the \\delta_0 value) and creates and evaluates
     the "Simulated" side of the system of equations.
 
@@ -137,18 +156,12 @@ def createSystem_base2(Kerrors, Betas, Phis, delta0, axis, grad = 8):
 
     p = 1.0 if axis == 'X' else -1.0
 
-    # Create the matricial system
-    Q, u, v = CreateSystem(Betas, Phis, Kerrors, p, grad)
-
-    # Create the big constants
-    vQu, vQv, uQu, uQv = CreateConstants(Q, u, v)
-
-    # The cos(\delta_0) for the calculations
-    cosd = np.cos(delta0)
-    sind = np.sin(delta0)
+    # Create the matricial system 
+    Q = CreateQ(M, Kerrors, p)
+    # NOTE: it is already operated by 𝚫K
     
-    # Return the two cosntants
-    return cosd*vQu - sind*vQv, -cosd*uQu + sind*uQv, np.diag(1.0 / (Kerrors + 1e-12)) @ Q
-
+    # Here, we create then z_0^* = z_0 / √2J = √β(s) sin(psi(s) - δ) 
+    z_star = np.cos(delta0)*u[1] - np.sin(delta0)*v[1]
     
+    return v[0]@Q@z_star, -u[0]@Q@z_star
     
