@@ -1,10 +1,15 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+
 home_dir=$(readlink -f $(dirname $(readlink -f "$0")))		# Directorio actual
 
 python_exec=python					# Ejecutable de python
 
 
 # FCC config
-config_file=configuration_fcc_old_BK.toml
+config_file=configuration_fcc_old.toml
 ip=ip.2
 
 # LHC config
@@ -23,7 +28,7 @@ ip=ip1
 
 
 # -- Added this line so Santiago can do things more easily
-$python_exec $home_dir/simulateSystem.py -s nom -C -cf $config_file 
+#$python_exec $home_dir/simulateSystem.py -s nom -C -cf $config_file 
 
 
 
@@ -88,14 +93,15 @@ $python_exec $home_dir/simulateSystem.py -s corr \
 		-n 100	\
 		-b 1
 
+# Esto no lo hacemos porque no necesitamos calcular APJ para saber el beta-betaing
 # Equivalente al ActionPhaseJump: calcula APJ y el avermax
-$python_exec $home_dir/calculateAPJ.py -s corr \
-		-C \
-		-cf $config_file \
-		-sf outputs/corrections/C_track.parquet \
-		-md outputs/nominal/nominal_measurements_twiss.parquet \
-		-od outputs/corrections/APJ/ \
-		-ab bpmsw.1l1.b1 \
+# $python_exec $home_dir/calculateAPJ.py -s corr \
+# 		-C \
+# 		-cf $config_file \
+# 		-sf outputs/corrections/C_track.parquet \
+# 		-md outputs/nominal/nominal_measurements_twiss.parquet \
+# 		-od outputs/corrections/APJ/ \
+# 		-ab bpmsw.1l1.b1 \
 
 # --------------------
 # Probar beta-beting
